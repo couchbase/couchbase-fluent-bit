@@ -1,5 +1,5 @@
-# hadolint
-FROM registry.access.redhat.com/ubi8/ubi as builder
+FROM registry.access.redhat.com/ubi8/ubi:8.3 as builder
+# hadolint ignore=DL3041
 RUN dnf update && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip && dnf clean all
 
 ADD https://github.com/fluent/fluent-bit/archive/refs/tags/v1.7.2.zip /source.zip
@@ -26,7 +26,7 @@ RUN cmake -DFLB_RELEASE=On -DFLB_TLS=On ../ && make && install bin/fluent-bit /f
 # Configuration files
 RUN cp /tmp/src/conf/*.conf /fluent-bit/etc/
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal as production
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.3 as production
 LABEL description="Couchbase Fluent Bit image with support for config reload, pre-processing and redaction" vendor="Couchbase" maintainer="docker@couchbase.com"
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.

@@ -17,14 +17,15 @@ build: $(SOURCE) go.mod
 image-artifacts: build
 	mkdir -p $(ARTIFACTS)/bin/linux
 	cp bin/linux/couchbase-watcher $(ARTIFACTS)/bin/linux
-	cp Dockerfile* LICENSE README.md conf/ test/ redaction/ $(ARTIFACTS)
+	cp Dockerfile* LICENSE README.md $(ARTIFACTS)
+	cp -rv conf test redaction $(ARTIFACTS)
 
 # This target (and only this target) is invoked by the production build job.
 # This job will archive all files that end up in the dist/ directory.
 dist: image-artifacts
 	rm -rf dist
 	mkdir -p dist
-	tar -C $(ARTIFACTS) -czf dist/couchbase-operator-logging-image_$(productVersion).tgz .
+	tar -C $(ARTIFACTS) -czvf dist/couchbase-operator-logging-image_$(productVersion).tgz .
 	rm -rf $(ARTIFACTS)
 
 lint:
