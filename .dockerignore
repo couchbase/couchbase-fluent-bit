@@ -1,2 +1,3 @@
 test/logs/*.actual
 test/logs/rebalance-logs/
+fluent-bit*.zip

@@ -1,2 +1,7 @@
+# Test output (if bind-mounted)
 test/logs/*.actual
 test/logs/rebalance-logs/
+# Build output
+build/
+dist/
+bin/

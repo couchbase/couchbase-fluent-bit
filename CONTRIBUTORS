@@ -1,4 +1,5 @@
 
-Portions of this project were based on work by Kubesphere in https://github.com/kubesphere/fluent-bit.
+Portions of this project were based on work by Kubesphere in https://github.com/kubesphere/fluent-bit,
+and also the LUA SHA1 hashing library from https://github.com/mpeterv/sha1.
 
 This project reuses the official base image of Fluent Bit from https://github.com/fluent/fluent-bit.
