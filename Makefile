@@ -29,6 +29,7 @@ dist: image-artifacts
 
 lint:
 	docker run --rm -i hadolint/hadolint < Dockerfile 
+	docker run --rm -i hadolint/hadolint < Dockerfile.rhel
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./...
 
 # NOTE: This target is only for local development. While we use this Dockerfile

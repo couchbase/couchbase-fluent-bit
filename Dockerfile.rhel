@@ -1,3 +1,4 @@
+# hadolint
 FROM registry.access.redhat.com/ubi8/ubi as builder
 RUN dnf update && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip && dnf clean all
 
@@ -10,8 +11,10 @@ RUN rm -rf /tmp/src/build/*
 ADD http://ftp.gnu.org/gnu/bison/bison-3.7.tar.gz /bison/
 ADD https://github.com/westes/flex/files/981163/flex-2.6.4.tar.gz /flex/
 RUN tar -xzvf /bison/bison-3.7.tar.gz -C /bison/ && tar -xzvf /flex/flex-2.6.4.tar.gz -C /flex/
-RUN cd /bison/bison*/ && ./configure && make && make install
-RUN cd /flex/flex*/ && ./configure && make && make install
+WORKDIR /bison/bison-3.7/
+RUN ./configure && make && make install
+WORKDIR /flex/flex-2.6.4/
+RUN ./configure && make && make install
 # We require flex & bison which are not available for UBI to build record accessor and this is also used in some other output plugins
 # We build 1.6.10 as the 1.7 series will not build without RA: https://github.com/fluent/fluent-bit/issues/3097
 # We disable http input as well because this triggers another RA failure in 1.6.10: https://github.com/fluent/fluent-bit/issues/2930
@@ -27,8 +30,18 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal
 LABEL maintainer="docker@couchbase.com"
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.
-
 RUN microdnf update && microdnf install -y openssl libpq systemd && microdnf clean all
 COPY --from=builder /fluent-bit /fluent-bit
 EXPOSE 2020
-CMD ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf"]
+
+# See Dockerfile for details - this should all be equivalent
+COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
+COPY conf/ /fluent-bit/etc/
+ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
+ENV COUCHBASE_LOGS /opt/couchbase/var/couchbase/logs
+VOLUME /fluent-bit/config
+ENV FLUENT_BIT_DYNAMIC_CONFIG /fluent-bit/config
+COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
+COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
+COPY redaction/redaction.lua /fluent-bit/etc/
+CMD ["/fluent-bit/bin/couchbase-watcher"]

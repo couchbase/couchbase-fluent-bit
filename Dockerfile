@@ -48,4 +48,4 @@ LABEL description="Couchbase Fluent Bit image with support for config reload, pr
 # Copying the base image to expose for the HTTP server if enabled
 EXPOSE 2020
 # Entry point - run our custom binary
-CMD ["/fluent-bit/bin/couchbase-watcher", "-c", "/fluent-bit/config/fluent-bit.conf"]
+CMD ["/fluent-bit/bin/couchbase-watcher"]

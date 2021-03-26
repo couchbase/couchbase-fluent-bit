@@ -413,6 +413,7 @@ func getDirectory(defaultValue, environmentVariable string) string {
 
 func main() {
 	ignoreExisting := flag.Bool("ignoreExisting", true, "Ignore any existing rebalance reports, if false will process then exit")
+	createWatchedDirectory := flag.Bool("createWatchedDirectory", true, "Auto-create the directories if they do not exist that we watch")
 	flag.Parse()
 
 	logger = log.NewLogfmtLogger(os.Stdout)
@@ -439,6 +440,12 @@ func main() {
 		_ = level.Info(logger).Log("msg", "Processed all existing ones so exiting")
 
 		os.Exit(0)
+	}
+	if *createWatchedDirectory {
+		err := os.MkdirAll(couchbaseWatchDir, 0755)
+		if err != nil {
+			_ = level.Error(logger).Log("msg", "Unable to create CB directory", "error", err, "inputDir", couchbaseWatchDir)
+		}
 	}
 
 	timer = time.NewTimer(0)
