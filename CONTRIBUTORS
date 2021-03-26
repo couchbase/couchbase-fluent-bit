@@ -1,0 +1,4 @@
+
+Portions of this project were based on work by Kubesphere in https://github.com/kubesphere/fluent-bit.
+
+This project reuses the official base image of Fluent Bit from https://github.com/fluent/fluent-bit.
