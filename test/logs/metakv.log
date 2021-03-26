@@ -1,0 +1,5 @@
+[metakv:debug,2021-03-09T17:32:01.613Z,ns_1@cb.local:simple_store_xdcr_ckpt_data<0.382.0>:simple_store:init:114]Creating Table: xdcr_ckpt_data
+[metakv:debug,2021-03-09T17:32:02.113Z,ns_1@cb.local:<0.410.0>:menelaus_metakv:handle_iterate:133]Starting iteration of /remoteCluster/. Continuous = false
+[metakv:debug,2021-03-09T17:32:14.993Z,ns_1@cb-example-0000.cb-example.default.svc:<0.421.0>:menelaus_metakv:handle_iterate:133]Starting iteration of /. Continuous = true
+[metakv:debug,2021-03-09T17:32:14.994Z,ns_1@cb-example-0000.cb-example.default.svc:<0.421.0>:menelaus_metakv:write_chunk:161]Sent /indexing/settings/config rev: g2wAAAABaAJtAAAAIDZmYzA4YzU4MThmZmE1MmRjNmM2MjRlZGEzMWJkZGMxaAJhA24FAB4tvNkOag== sensitive: false
+[metakv:debug,2021-03-09T17:32:15.256Z,ns_1@cb-example-0000.cb-example.default.svc:<0.1221.0>:menelaus_metakv:handle_mutate:90]Updated <<"/query/dictionary_cache/counter">>. Elapsed time:0 ms.

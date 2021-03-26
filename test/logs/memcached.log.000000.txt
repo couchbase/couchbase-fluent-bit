@@ -1,0 +1,24 @@
+2021-03-09T17:32:01.857558+00:00 INFO ---------- Opening logfile: /opt/couchbase/var/lib/couchbase/logs/memcached.log.000000.txt
+2021-03-09T17:32:01.859344+00:00 INFO Couchbase version 6.6.0-7909 starting.
+2021-03-09T17:32:01.859512+00:00 INFO Breakpad enabled. Minidumps will be written to '/opt/couchbase/var/lib/couchbase/crash'
+2021-03-09T17:32:01.860619+00:00 INFO Using SLA configuration: {"COMPACT_DB":{"slow":"1800 s"},"DELETE_BUCKET":{"slow":"10 s"},"SEQNO_PERSISTENCE":{"slow":"30 s"},"comment":"Current MCBP SLA configuration","default":{"slow":"500 ms"},"version":1}
+2021-03-09T17:32:02.031169+00:00 INFO Change scram fallback salt from <ud>c2FsdA==</ud> to <ud>w4tVLar9dY0PcCHE</ud>
+2021-03-09T17:32:02.755507+00:00 INFO 49: Client 127.0.0.1:48253 authenticated as <ud>@ns_server</ud>
+2021-03-09T17:32:02.761301+00:00 INFO 49: HELO [regular] [ 127.0.0.1:48253 - 127.0.0.1:11209 (<ud>@ns_server</ud>) ]
+2021-03-09T17:32:02.770149+00:00 INFO 50: [ 127.0.0.1:35565 - 127.0.0.1:11209 (<ud>@ns_server</ud>) ] Updated global cluster configuration. New revision: 5
+2021-03-09T17:32:15.802830+00:00 INFO 66: Client 127.0.0.1:36243 authenticated as <ud>@ns_server</ud>
+2021-03-09T17:33:54.083354+00:00 INFO (default) VBucket: created vb:342 with state:replica initialState:dead lastSeqno:0 persistedRange:{0,0} max_cas:0 uuid:54242792125236 topology:null
+2021-03-09T17:33:54.083379+00:00 INFO (default) VBucket::setState: transitioning vb:342 with high seqno:0 from:replica to:replica
+2021-03-09T20:21:12.400835+00:00 WARNING 87: (default) DCP (Consumer) eq_dcpq:replication:ns_1@cb-example-0002.cb-example.default.svc->ns_1@cb-example-0000.cb-example.default.svc:default - (vb:847) Setting stream to dead state, last_seqno is 14, unAckedBytes is 0, status is The stream closed early because the conn was disconnected
+2021-03-09T20:21:12.516806+00:00 INFO 86 Closing connection [ 10.244.1.4:51447 - 10.244.3.3:11209 (<ud>@ns_server</ud>) ] due to read error: Connection reset by peer
+2021-03-09T20:21:12.516858+00:00 INFO 86: (No Engine) DCP (Producer) eq_dcpq:replication:ns_1@cb-example-0000.cb-example.default.svc->ns_1@cb-example-0002.cb-example.default.svc:default - Removing connection [ 10.244.1.4:51447 - 10.244.3.3:11209 (<ud>@ns_server</ud>) ]
+2021-03-09T20:21:12.516881+00:00 WARNING 86: (default) DCP (Producer) eq_dcpq:replication:ns_1@cb-example-0000.cb-example.default.svc->ns_1@cb-example-0002.cb-example.default.svc:default - (vb:171) Stream closing, sent until seqno 3 remaining items 0, reason: The stream closed early because the conn was disconnected
+2021-03-09T20:23:13.239062+00:00 INFO 77: [ 127.0.0.1:36273 - 127.0.0.1:11209 (<ud>@ns_server</ud>) ] Updated cluster configuration for bucket [default]. New revision: 90
+2021-03-09T20:23:13.241226+00:00 INFO Pushing new cluster config for bucket:[default] revision:[90]
+2021-03-09T20:23:13.389567+00:00 INFO (default) VBucket::setState: transitioning vb:853 with high seqno:17 from:replica to:active meta:{"topology":[["ns_1@cb-example-0000.cb-example.default.svc",null]]}
+2021-03-09T20:23:13.389874+00:00 INFO (default) KVBucket::setVBucketState: vb:853 created new failover entry with uuid:25157355656503 and seqno:0
+2021-03-09T20:23:13.646246+00:00 INFO (default) VBucket::setState: transitioning vb:341 with high seqno:17 from:active to:active meta:{"topology":[["ns_1@cb-example-0000.cb-example.default.svc",null]]}
+2021-03-09T20:24:20.943569+00:00 INFO (default) VBucket::setState: transitioning vb:173 with high seqno:5 from:active to:active meta:{"topology":[["ns_1@cb-example-0000.cb-example.default.svc","ns_1@cb-example-0002.cb-example.default.svc"]]}
+2021-03-09T20:24:20.991154+00:00 INFO 50: (default) DCP (Producer) eq_dcpq:replication:ns_1@cb-example-0000.cb-example.default.svc->ns_1@cb-example-0002.cb-example.default.svc:default - (vb:171) Creating stream with start seqno 0 and end seqno 18446744073709551615; requested end seqno was 18446744073709551615, collections-manifest uid:none, sid:none
+2021-03-09T20:24:21.235368+00:00 INFO 76: [ 127.0.0.1:47909 - 127.0.0.1:11209 (<ud>@ns_server</ud>) ] Updated cluster configuration for bucket [default]. New revision: 461
+2021-03-09T20:24:21.235488+00:00 INFO Pushing new cluster config for bucket:[default] revision:[461]

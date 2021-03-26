@@ -1,0 +1,5 @@
+127.0.0.1 - @ [09/Mar/2021:17:32:02 +0000] "RPCCONNECT /goxdcr-cbauth HTTP/1.1" 200 0 - Go-http-client/1.1
+::1 - Administrator [09/Mar/2021:17:32:13 +0000] "GET /pools/default HTTP/1.1" 404 14 - Go-http-client/1.1
+10.244.1.2 - Administrator [09/Mar/2021:17:32:14 +0000] "GET /pools HTTP/1.1" 200 541 - couchbase-operator/2.2.0 (commit/10459d7c9b0642eb398bdc59ad45b26201065ba1; build/999)
+127.0.0.1 - @ [09/Mar/2021:17:32:14 +0000] "RPCCONNECT /index-cbauth HTTP/1.1" 200 0 - Go-http-client/1.1
+127.0.0.1 - @index-cbauth [09/Mar/2021:17:32:14 +0000] "GET /_metakv/indexing/settings/config HTTP/1.1" 200 937 - Go-http-client/1.1

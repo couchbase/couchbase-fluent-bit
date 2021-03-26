@@ -1,0 +1,19 @@
+2021/03/09 17:32:15 cbauth: key: fts/remoteClients registered for tls config updates
+_time=2021-03-09T17:32:15.241+00:00 _level=INFO _msg= Initialization of cbauth succeeded  
+_time=2021-03-09T17:32:15.260+00:00 _level=INFO _msg=New settings received: {"timeout":0,"n1ql-feat-ctrl":12,"max-parallelism":1,"query.settings.curl_whitelist":{"all_access":false,"allowed_urls":[],"disallowed_urls":[]},"query.settings.tmp_space_dir":"/opt/couchbase/var/lib/couchbase/tmp","completed-limit":4000,"prepared-limit":16384,"pipeline-batch":16,"pipeline-cap":512,"scan-cap":512,"loglevel":"info","completed-threshold":1000,"query.settings.tmp_space_size":5120} 
+_time=2021-03-09T17:32:15.260+00:00 _level=INFO _msg=New Value for curl whitelist <ud>map[allowed_urls:[] disallowed_urls:[] all_access:false]</ud> 
+2021-03-09T17:32:15.267+00:00 [Info] GSIC - Setting config map[query_tmpspace_dir:/opt/couchbase/var/lib/couchbase/tmp query_tmpspace_limit:5120]
+_time=2021-03-09T17:32:15.268+00:00 _level=INFO _msg=Query Configuration changed for prepared-limit. New value is 16384 
+2021-03-09T17:32:15.274+00:00 [INFO] Using plain authentication for user <ud>@cbq-engine</ud> 
+2021/03/09 17:32:15 audit: created new audit service
+_time=2021-03-09T17:32:15.302+00:00 _level=INFO _msg=cbq-engine started scan-cap=512 request-size-cap=67108864 max-index-api=4 max-parallelism=1 loglevel=INFO datastore=http://127.0.0.1:8091 max-concurrency=6 servicers=24 pipeline-batch=16 timeout=0s version=6.5.0-N1QL pipeline-cap=512 request-cap=256 plus-servicers=96 n1ql_feat_cntrl=12 
+_time=2021-03-09T17:32:15.304+00:00 _level=ERROR _msg=Updating node-to-node encryption level: {EncryptData:false DisableNonSSLPorts:false} 
+2021/03/09 17:32:15 cfg_metakv: metaKVCallback, path: /fts/cbgt/cfg/nodeDefs-known/6fc08c5818ffa52dc6c624eda31bddc1, key: nodeDefs-known/6fc08c5818ffa52dc6c624eda31bddc1, deletion: false
+2021-03-09T17:32:15.492+00:00 [INFO] Reponse : Message:"Evaluator initialized successfully" 
+_time=2021-03-09T17:32:15.813+00:00 _level=INFO _msg=HttpEndpoint: close listener  Address=0.0.0.0:18093 err=<nil> 
+_time=2021-03-09T17:32:15.813+00:00 _level=INFO _msg=HttpEndpoint: close listener  Address=[::]:18093 err=<nil> 
+_time=2021-03-09T17:32:15.813+00:00 _level=INFO _msg=HttpEndpoint: ListenTLS Address=0.0.0.0:18093 
+2021/03/09 17:33:25 cfg_metakv: metaKVCallback, path: /fts/cbgt/cfg/nodeDefs-wanted/d8d2a22b395590a449d3a07fed8f71ee, key: nodeDefs-wanted/d8d2a22b395590a449d3a07fed8f71ee, deletion: false
+_time=2021-03-09T17:33:49.755+00:00 _level=INFO _msg=Audit update handler function 1: Got updated audit settings: AuditEnabled: true EventDisabled: map[] UserWhitelisted: <ud>map[]</ud> Uid: <ud>69990733</ud>  
+2021-03-09T17:33:50.704+00:00 [INFO] Using plain authentication for user <ud>@cbq-engine</ud> 
+2021/03/09 20:23:44 cfg_metakv: metaKVCallback, path: /fts/cbgt/cfg/nodeDefs-wanted/1bc09cc30397ee4b247c01246b8595f8, key: nodeDefs-wanted/1bc09cc30397ee4b247c01246b8595f8, deletion: false
