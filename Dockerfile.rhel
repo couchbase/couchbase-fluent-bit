@@ -16,8 +16,8 @@ RUN ./configure && make && make install
 WORKDIR /flex/flex-2.6.4/
 RUN ./configure && make && make install
 # We require flex & bison which are not available for UBI to build record accessor and this is also used in some other output plugins
-# We build 1.6.10 as the 1.7 series will not build without RA: https://github.com/fluent/fluent-bit/issues/3097
-# We disable http input as well because this triggers another RA failure in 1.6.10: https://github.com/fluent/fluent-bit/issues/2930
+# We could build 1.6.10 as the 1.7 series will not build without RA: https://github.com/fluent/fluent-bit/issues/3097
+# We must disable http input as well because this triggers another RA failure in 1.6.10: https://github.com/fluent/fluent-bit/issues/2930
 #RUN cmake -DFLB_RECORD_ACCESSOR=Off -DFLB_STREAM_PROCESSOR=Off -DFLB_IN_HTTP=Off -DFLB_OUT_LOKI=Off -DFLB_TLS=On ../ && make && install bin/fluent-bit /fluent-bit/bin/
 
 WORKDIR /tmp/src/build/
@@ -26,13 +26,12 @@ RUN cmake -DFLB_RELEASE=On -DFLB_TLS=On ../ && make && install bin/fluent-bit /f
 # Configuration files
 RUN cp /tmp/src/conf/*.conf /fluent-bit/etc/
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal
-LABEL maintainer="docker@couchbase.com"
+FROM registry.access.redhat.com/ubi8/ubi-minimal as production
+LABEL description="Couchbase Fluent Bit image with support for config reload, pre-processing and redaction" vendor="Couchbase" maintainer="docker@couchbase.com"
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.
 RUN microdnf update && microdnf install -y openssl libpq systemd && microdnf clean all
 COPY --from=builder /fluent-bit /fluent-bit
-EXPOSE 2020
 
 # See Dockerfile for details - this should all be equivalent
 COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
@@ -44,4 +43,17 @@ ENV FLUENT_BIT_DYNAMIC_CONFIG /fluent-bit/config
 COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
 COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
+
+FROM production as test
+# Add test cases
+COPY test/ /fluent-bit/test/
+
+# Redirect to local logs
+ENV COUCHBASE_LOGS /fluent-bit/test/logs
+ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
+CMD ["sh", "/fluent-bit/test/run-tests.sh"]
+
+# We need a build to complete without targets that produces the official image to deploy
+FROM production 
+EXPOSE 2020
 CMD ["/fluent-bit/bin/couchbase-watcher"]
