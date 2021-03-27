@@ -5,3 +5,4 @@ test/logs/rebalance-logs/
 build/
 dist/
 bin/
+test-dist/

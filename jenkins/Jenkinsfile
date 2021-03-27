@@ -1,0 +1,55 @@
+pipeline {
+  agent {
+    label 'ubuntu-18.04 && master'
+  }
+
+  environment {
+    GOVERSION = '1.16.2'
+    PATH = "${env.WORKSPACE}/go/bin:${PATH}"
+  }
+
+  stages {
+    stage('Go Install') {
+      steps {
+        sh 'wget -q -O- https://dl.google.com/go/go${GOVERSION}.linux-amd64.tar.gz | tar xz'
+      }
+    }
+    stage('Build code') {
+      steps {
+        sh 'make build'
+      }
+    }
+    stage('Lint code') {
+      steps {
+        sh 'make lint'
+      }
+    }
+    // Cannot run the following without a container runtime
+    // stage('Build containers') {
+    //   steps {
+    //     sh 'make container'
+    //   }
+    // }
+    // stage('Lint containers') {
+    //   steps {
+    //     sh 'make container-lint'
+    //   }
+    // }
+    // stage('Test containers') {
+    //   steps {
+    //     sh 'make test'
+    //   }
+    // }
+    // stage('Full build and test') {
+    //   steps {
+    //     sh 'make'
+    //   }
+    // }
+  }
+
+  post {
+    always {
+      cleanWs()
+    }
+  }
+}

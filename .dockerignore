@@ -1,2 +1,11 @@
+# Ignore everything by default then explicitly allow
+*
+
+!LICENSE
+!bin/
+!conf/
+!redaction/
+# Everything in test except actuals and output
+!test/
 test/logs/*.actual
 test/logs/rebalance-logs/

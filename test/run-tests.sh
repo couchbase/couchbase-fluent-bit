@@ -35,6 +35,8 @@ function runExpectTest() {
 
     # We have to timeout the test case as ending on EOF pauses/breaks the rest of the pipeline once it exits
     # https://github.com/fluent/fluent-bit/issues/3274
+    # We need to use a KILL signal as that's the only one `timeout` supports on Busybox that actually works, 
+    # however this may generate some extra messages on other targets.
     timeout -s 9 "${TEST_TIMEOUT}" /fluent-bit/bin/fluent-bit --config "$testConfig" > "$testLog" 2>&1
     
     # Currently it always exits with 0 so we have to check for a specific error message.
@@ -50,9 +52,10 @@ function runExpectTest() {
 }
 
 # Deal with any rebalance reports by invoking the watcher
-if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then 
+if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
     # Test the removal of old files once we have >5 - create some dummy ones if we don't have an existing directory mounted in
     if [[ ! -d "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" ]]; then
+        echo "Creating dummy files to test rotation of old files in rebalance processing"
         # Add a sub-directory to test that as well
         mkdir -p "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"/1
         #touch "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"/{2..10}.test
@@ -67,6 +70,7 @@ if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
         fi
     fi
 
+    echo "Testing rebalance processing"
     # Run the watcher in the special mode to process existing and exit
     if /fluent-bit/bin/couchbase-watcher --ignoreExisting=false; then 
         countOfInput=$(find "${COUCHBASE_LOGS}/rebalance" -type f -name "rebalance_report_*.json" -print0 |wc -l)
@@ -138,12 +142,21 @@ if [[ $exitCode -eq 0 ]]; then
             continue
         fi
 
+        # The FTS and Eventing logs have issues with timestamp parsing so we ignore those
+        # Unfortunately Busybox is limited with tests/regexes so being very explicit here
+        if [[ "$i" == "${COUCHBASE_LOGS}/fts.log.expected" || "$i" == "${COUCHBASE_LOGS}/eventing.log.expected" ]]; then
+            echo "Ignoring timestamp deltas in $i"
+            # Replace timestamps, e.g.: .actual: [1616875582.481815658, {"filename" --> .actual: [__IGNORED__, {"filename"
+            sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$actual"
+            sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$expected"
+        fi
+
         if diff -a -q "${actual}" "${expected}"; then
+            echo "PASSED: No differences found in $actual and $expected"
+        else
             echo "FAILED: Differences found between $actual and $expected"
             diff -a "${actual}" "${expected}"
             exitCode=1
-        else
-            echo "PASSED: No differences found in $actual and $expected"
         fi
     done
 else 

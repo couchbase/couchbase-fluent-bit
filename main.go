@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"io/ioutil"
 	"math"
@@ -29,7 +30,7 @@ import (
 
 const (
 	binPath      = "/fluent-bit/bin/fluent-bit"
-	cfgPath      = "/fluent-bit/etc/fluent-bit.conf"
+	cfgPath      = "/fluent-bit/config/fluent-bit.conf"
 	watchDir     = "/fluent-bit/config"
 	MaxDelayTime = time.Minute * 5
 	ResetTime    = time.Minute * 10
@@ -257,13 +258,14 @@ func processExisting(couchbaseWatchDir, rebalanceOutputDir string) error {
 		}
 	}
 
+	_ = level.Info(logger).Log("msg", "Processed all existing files in watch directory", "dir", couchbaseWatchDir)
 	return nil
 }
 
 // Disable cyclometric complexity check as the intention is to align this with the Kubesphere version
 // so we can easily update if needs be.
 //nolint:golint,cyclop
-func createWatchers(couchbaseWatchDir, rebalanceOutputDir string) (*run.Group, error) {
+func createWatchers(couchbaseLogDir, rebalanceOutputDir string) (*run.Group, error) {
 	// Based on the KubeSphere version
 	var g run.Group
 	{
@@ -280,10 +282,27 @@ func createWatchers(couchbaseWatchDir, rebalanceOutputDir string) (*run.Group, e
 			return nil, err
 		}
 
-		err = watcher.Add(couchbaseWatchDir)
-		if err != nil {
-			_ = level.Error(logger).Log("msg", "Unable to watch directory", "dir", couchbaseWatchDir, "error", err)
-			return nil, err
+		couchbaseWatchDir := couchbaseLogDir + "rebalance/"
+
+		// The rebalance directory may not exist when the container starts so we wait for it to appear
+		foundRebalance := true
+		_, err = os.Stat(couchbaseWatchDir)
+		if os.IsNotExist(err) {
+			_ = level.Info(logger).Log("msg", "Rebalance report directory does not exist", "dir", couchbaseWatchDir)
+			foundRebalance = false
+
+			// Watch the main log directory and wait for rebalance to appear
+			err = watcher.Add(couchbaseLogDir)
+			if err != nil {
+				_ = level.Error(logger).Log("msg", "Unable to watch directory", "dir", couchbaseLogDir, "error", err)
+				return nil, err
+			}
+		} else {
+			err = watcher.Add(couchbaseWatchDir)
+			if err != nil {
+				_ = level.Error(logger).Log("msg", "Unable to watch directory", "dir", couchbaseWatchDir, "error", err)
+				return nil, err
+			}
 		}
 
 		done := make(chan bool)
@@ -297,14 +316,44 @@ func createWatchers(couchbaseWatchDir, rebalanceOutputDir string) (*run.Group, e
 						if !isValidEvent(event) {
 							continue
 						}
-						// Now we need to get the filename and copy it to the actual tailed location
-						// The mount should be read-only and we do not want to edit-in-place anyway so take a temporary copy to work with
-						filename := couchbaseWatchDir + event.Name
-						err := processFile(filename, rebalanceOutputDir)
-						if err != nil {
-							_ = level.Error(logger).Log("msg", "Error reading file", "file", filename, "error", err)
-						}
+						_ = level.Debug(logger).Log("msg", "Couchbase watcher event triggered", "event", event)
+						if foundRebalance {
+							// Now we need to get the filename and copy it to the actual tailed location
+							// The mount should be read-only and we do not want to edit-in-place anyway so take a temporary copy to work with
+							filename := event.Name
 
+							err := processFile(filename, rebalanceOutputDir)
+							if err != nil {
+								_ = level.Error(logger).Log("msg", "Error reading file", "file", filename, "error", err)
+							}
+						} else {
+							// On each notification check for existence
+							_, err = os.Stat(couchbaseWatchDir)
+							if os.IsNotExist(err) {
+								_ = level.Debug(logger).Log("msg", "Rebalance report directory still does not exist", "dir", couchbaseWatchDir)
+							} else {
+								// Switch to the new branch now
+								foundRebalance = true
+
+								err := watcher.Remove(couchbaseLogDir)
+								if err != nil {
+									_ = level.Error(logger).Log("msg", "Error removing watch on log directory", "dir", couchbaseLogDir, "error", err)
+								}
+
+								// process all existing
+								err = processExisting(couchbaseWatchDir, rebalanceOutputDir)
+								if err != nil {
+									_ = level.Error(logger).Log("msg", "Unable to read files in rebalance directory", "error", err, "inputDir", couchbaseWatchDir, "outputDir", rebalanceOutputDir)
+								}
+
+								// watch for new ones
+								err = watcher.Add(couchbaseWatchDir)
+								if err != nil {
+									_ = level.Error(logger).Log("msg", "Unable to watch directory", "dir", couchbaseWatchDir, "error", err)
+								}
+								_ = level.Info(logger).Log("msg", "Rebalance report directory now exists so watching", "dir", couchbaseWatchDir)
+							}
+						}
 						// watch for errors
 					case err := <-watcher.Errors:
 						_ = level.Error(logger).Log("msg", "Watcher error", err)
@@ -413,46 +462,51 @@ func getDirectory(defaultValue, environmentVariable string) string {
 
 func main() {
 	ignoreExisting := flag.Bool("ignoreExisting", true, "Ignore any existing rebalance reports, if false will process then exit")
-	createWatchedDirectory := flag.Bool("createWatchedDirectory", true, "Auto-create the directories if they do not exist that we watch")
 	flag.Parse()
 
 	logger = log.NewLogfmtLogger(os.Stdout)
 	_ = level.Info(logger).Log("msg", "Starting up CB-FB processor", "ignoreExisting", *ignoreExisting)
 
-	couchbaseWatchDir := getDirectory("/opt/couchbase/var/couchbase/logs", "COUCHBASE_LOGS") + "rebalance/"
+	// Kubesphere configuration
+	_ = level.Info(logger).Log("msg", "Using fluent-bit binary: "+binPath)
+	_ = level.Info(logger).Log("msg", "Using fluent-bit configuration: "+cfgPath)
+	_ = level.Info(logger).Log("msg", "Watching for configuration change in: "+watchDir)
+
+	// The logs directory is required to exist
+	couchbaseLogDir := getDirectory("/opt/couchbase/var/couchbase/logs", "COUCHBASE_LOGS")
+
+	// The actual rebalance directory may not exist yet
+	couchbaseWatchDir := couchbaseLogDir + "rebalance/"
 	_ = level.Info(logger).Log("msg", "Watching for rebalance reports in: "+couchbaseWatchDir)
 
+	// We need write access to this directory
 	rebalanceOutputDir := getDirectory("/tmp/rebalance-logs", "COUCHBASE_LOGS_REBALANCE_TEMPDIR")
 	_ = level.Info(logger).Log("msg", "Temporary processed rebalance reports in: "+rebalanceOutputDir)
 
 	err := os.Mkdir(rebalanceOutputDir, 0700)
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrExist) {
 		_ = level.Error(logger).Log("msg", "Unable to create rebalance output directory", "dir", rebalanceOutputDir, "error", err)
 	}
 
+	// To simplify integration testing we add a mode that allows us to just parse existing ones rather than wait for them to appear
 	if !*ignoreExisting {
 		// Deal with any existing ones
 		err := processExisting(couchbaseWatchDir, rebalanceOutputDir)
 		if err != nil {
-			_ = level.Error(logger).Log("msg", "Unable to read files in CB directory", "error", err, "inputDir", couchbaseWatchDir, "outputDir", rebalanceOutputDir)
+			_ = level.Error(logger).Log("msg", "Unable to process existing files in CB directory", "error", err, "inputDir", couchbaseWatchDir, "outputDir", rebalanceOutputDir)
 		}
 
 		_ = level.Info(logger).Log("msg", "Processed all existing ones so exiting")
 
 		os.Exit(0)
 	}
-	if *createWatchedDirectory {
-		err := os.MkdirAll(couchbaseWatchDir, 0755)
-		if err != nil {
-			_ = level.Error(logger).Log("msg", "Unable to create CB directory", "error", err, "inputDir", couchbaseWatchDir)
-		}
-	}
 
 	timer = time.NewTimer(0)
 
-	runGroup, err := createWatchers(couchbaseWatchDir, rebalanceOutputDir)
+	// Set up our watchers and simplify this method
+	runGroup, err := createWatchers(couchbaseLogDir, rebalanceOutputDir)
 	if err != nil {
-		_ = level.Error(logger).Log("msg", "Unable to create watchers", "error", err, "inputDir", couchbaseWatchDir, "outputDir", rebalanceOutputDir)
+		_ = level.Error(logger).Log("msg", "Unable to create watchers", "error", err, "inputDir", couchbaseLogDir, "outputDir", rebalanceOutputDir)
 	} else {
 		err := runGroup.Run()
 		if err != nil {

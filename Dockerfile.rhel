@@ -7,21 +7,40 @@ RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src
 RUN unzip /source.zip -d /tmp/src && mv /tmp/src/fluent-bit-*/* /tmp/src/
 RUN rm -rf /tmp/src/build/*
 
-# Required for record accessor
-ADD http://ftp.gnu.org/gnu/bison/bison-3.7.tar.gz /bison/
-ADD https://github.com/westes/flex/files/981163/flex-2.6.4.tar.gz /flex/
-RUN tar -xzvf /bison/bison-3.7.tar.gz -C /bison/ && tar -xzvf /flex/flex-2.6.4.tar.gz -C /flex/
-WORKDIR /bison/bison-3.7/
-RUN ./configure && make && make install
-WORKDIR /flex/flex-2.6.4/
-RUN ./configure && make && make install
 # We require flex & bison which are not available for UBI to build record accessor and this is also used in some other output plugins
 # We could build 1.6.10 as the 1.7 series will not build without RA: https://github.com/fluent/fluent-bit/issues/3097
 # We must disable http input as well because this triggers another RA failure in 1.6.10: https://github.com/fluent/fluent-bit/issues/2930
 #RUN cmake -DFLB_RECORD_ACCESSOR=Off -DFLB_STREAM_PROCESSOR=Off -DFLB_IN_HTTP=Off -DFLB_OUT_LOKI=Off -DFLB_TLS=On ../ && make && install bin/fluent-bit /fluent-bit/bin/
+ARG BISON_VER=3.7
+ARG BUSON_URL=http://ftp.gnu.org/gnu/bison
+ARG FLEX_VER=2.6.4
+ARG FLEX_URL=https://github.com/westes/flex/files/981163
+ADD ${BUSON_URL}/bison-${BISON_VER}.tar.gz /bison/
+ADD ${FLEX_URL}/flex-${FLEX_VER}.tar.gz /flex/
+RUN tar -xzvf /bison/bison-${BISON_VER}.tar.gz -C /bison/ && tar -xzvf /flex/flex-${FLEX_VER}.tar.gz -C /flex/
+# Flex needs Bison so do first
+WORKDIR /bison/bison-${BISON_VER}/
+RUN ./configure && make && make install
+WORKDIR /flex/flex-${FLEX_VER}/
+RUN ./configure && make && make install
 
 WORKDIR /tmp/src/build/
-RUN cmake -DFLB_RELEASE=On -DFLB_TLS=On ../ && make && install bin/fluent-bit /fluent-bit/bin/
+
+# Build with tests for Fluent Bit and plugins
+# IPv6 tests dependent on docker configuration and support so disable
+RUN sed -i '/{ "ipv6_client_server", test_ipv6_client_server},/d' ../tests/internal/network.c
+# Disable the TD output plugin & Process input plugin as unit test fails
+RUN cmake \
+      -DFLB_TESTS_RUNTIME=On \
+      -DFLB_TESTS_INTERNAL=On \
+      -DFLB_RELEASE=On \
+      -DFLB_TLS=On \
+      -DFLB_OUT_TD=Off \
+      -DFLB_IN_PROC=Off \
+      ../ && \
+      make && \
+      make test && \
+      install bin/fluent-bit /fluent-bit/bin/
 
 # Configuration files
 RUN cp /tmp/src/conf/*.conf /fluent-bit/etc/
@@ -31,9 +50,14 @@ LABEL description="Couchbase Fluent Bit image with support for config reload, pr
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.
 RUN microdnf update && microdnf install -y openssl libpq systemd && microdnf clean all
+
+# Meet certification requirements - needs matching changes in operator to mount logs with appropriate permissions plus server log creation too
+# RUN groupadd -r fluentbit && useradd --no-log-init -r -g fluentbit fluentbit
+# USER fluentbit
+
 COPY --from=builder /fluent-bit /fluent-bit
 
-# See Dockerfile for details - this should all be equivalent
+# See Dockerfile for details - this should all be equivalent to the standard image
 COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
 COPY conf/ /fluent-bit/etc/
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
@@ -45,6 +69,9 @@ COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
 FROM production as test
+# Add unit tests from Fluent Bit as well just in case we want to re-run
+COPY --from=builder /tmp/src/build/bin/flb-* /fluent-bit/test/bin/
+
 # Add test cases
 COPY test/ /fluent-bit/test/
 
@@ -57,3 +84,14 @@ CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 FROM production 
 EXPOSE 2020
 CMD ["/fluent-bit/bin/couchbase-watcher"]
+
+ARG PROD_VERSION
+
+LABEL name="couchbase/operator-logging" \
+      vendor="Couchbase" \
+      version="${PROD_VERSION}" \
+      release="Latest" \
+      summary="Couchbase Autonomous Operator ${PROD_VERSION} Log Support" \
+      description="Couchbase Autonomous Operator ${PROD_VERSION} Log Support" \
+      architecture="x86_64" \
+      run="docker run -d --name logging registry.connect.redhat.com/couchbase/operator-logging:${PROD_VERSION}-${OS_BUILD}"

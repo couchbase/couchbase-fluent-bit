@@ -8,6 +8,10 @@ ARTIFACTS = build/artifacts/
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
+.PHONY: all build lint container container-rhel container-public dist test test-dist container-clean clean
+
+all: clean build lint container container-rhel container-lint container-scan test dist test-dist
+
 build: $(SOURCE) go.mod
 	for platform in linux darwin ; do \
 	  echo "Building $$platform binary" ; \
@@ -29,9 +33,7 @@ dist: image-artifacts
 	rm -rf $(ARTIFACTS)
 
 lint:
-	docker run --rm -i hadolint/hadolint < Dockerfile 
-	docker run --rm -i hadolint/hadolint < Dockerfile.rhel
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./...
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./main.go
 
 # NOTE: This target is only for local development. While we use this Dockerfile
 # (for now), the actual "docker build" command is located in the Jenkins job
@@ -41,7 +43,50 @@ lint:
 # can't be here anyway.
 container: build
 	docker build -f Dockerfile -t ${DOCKER_USER}/operator-logging:${DOCKER_TAG} .
-
-test: container
 	docker build -f Dockerfile --target test -t ${DOCKER_USER}/operator-logging-test:${DOCKER_TAG} .
+
+container-rhel: build
+	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) -t ${DOCKER_USER}/operator-logging-rhel:${DOCKER_TAG} .
+	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) --target test -t ${DOCKER_USER}/operator-logging-test-rhel:${DOCKER_TAG} .
+
+container-lint: build lint
+	docker run --rm -i hadolint/hadolint < Dockerfile 
+	docker run --rm -i hadolint/hadolint < Dockerfile.rhel
+
+container-scan: container container-rhel
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
+		--severity "HIGH,CRITICAL" --no-progress ${DOCKER_USER}/operator-logging:${DOCKER_TAG}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
+		--severity "HIGH,CRITICAL" --no-progress ${DOCKER_USER}/operator-logging-rhel:${DOCKER_TAG}
+
+test: lint container container-rhel container-lint
 	docker run --rm -it ${DOCKER_USER}/operator-logging-test:${DOCKER_TAG}
+	docker run --rm -it ${DOCKER_USER}/operator-logging-test-rhel:${DOCKER_TAG}
+
+# This target pushes the containers to a public repository.
+# A typical one liner to deploy to the cloud would be:
+# 	make container-public -e DOCKER_USER=couchbase DOCKER_TAG=2.0.0
+container-public: container
+	docker push ${DOCKER_USER}/operator-logging:${DOCKER_TAG}
+	docker push ${DOCKER_USER}/operator-logging-test:${DOCKER_TAG}
+
+# Special target to verify the internal release pipeline will work as well
+# Take the archive we would make and extract it to a local directory to then run the docker builds on
+test-dist: dist
+	rm -rf test-dist/
+	mkdir -p test-dist/
+	tar -xzvf dist/couchbase-operator-logging-image_$(productVersion).tgz -C test-dist/
+	docker build -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/operator-logging-test-dist:${DOCKER_TAG}
+	docker build -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/operator-logging-test-dist-rhel:${DOCKER_TAG}
+
+container-clean:
+	docker rmi -f ${DOCKER_USER}/operator-logging:${DOCKER_TAG} \
+				  ${DOCKER_USER}/operator-logging-test:${DOCKER_TAG} \
+				  ${DOCKER_USER}/operator-logging-rhel:${DOCKER_TAG} \
+				  ${DOCKER_USER}/operator-logging-test-rhel:${DOCKER_TAG} \
+				  ${DOCKER_USER}/operator-logging-test-dist:${DOCKER_TAG} \
+				  ${DOCKER_USER}/operator-logging-test-dist-rhel:${DOCKER_TAG}
+
+clean: container-clean
+	rm -rf $(ARTIFACTS) bin/ dist/ test-dist/
+
