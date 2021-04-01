@@ -69,6 +69,8 @@ COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
 FROM production as test
+RUN microdnf update && microdnf install -y findutils && microdnf clean all
+
 # Add unit tests from Fluent Bit as well just in case we want to re-run
 COPY --from=builder /tmp/src/build/bin/flb-* /fluent-bit/test/bin/
 

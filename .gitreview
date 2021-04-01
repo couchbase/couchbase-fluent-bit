@@ -1,5 +1,5 @@
 [gerrit]
 host=review.couchbase.org
 port=29418
-project=couchbase-operator-logging.git
+project=couchbase-fluent-bit.git
 defaultbranch=master
