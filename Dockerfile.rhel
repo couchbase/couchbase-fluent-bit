@@ -1,6 +1,6 @@
 FROM registry.access.redhat.com/ubi8/ubi:8.3 as builder
 # hadolint ignore=DL3041
-RUN dnf update && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip && dnf clean all
+RUN dnf update -y && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip && dnf clean all
 
 ADD https://github.com/fluent/fluent-bit/archive/refs/tags/v1.7.2.zip /source.zip
 RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src
