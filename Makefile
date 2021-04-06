@@ -55,9 +55,9 @@ container-lint: build lint
 
 container-scan: container container-rhel
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
-		--severity "HIGH,CRITICAL" --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
+		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
-		--severity "HIGH,CRITICAL" --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
+		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 
 test: lint container container-rhel container-lint
 	docker run --rm -it ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}

@@ -1,4 +1,4 @@
-# couchbase-operator-logging
+# couchbase-fluent-bit
 
 ## Summary
 
@@ -16,6 +16,8 @@ To help provide the capability in this image we make use of other OSS:
 * https://github.com/kubesphere/fluent-bit
 * https://github.com/mpeterv/sha1
 * https://github.com/fluent/fluent-bit 
+
+![Overview of logging sidecar](docs/overview-of-sidecar-logging.png "Overview of sidecar logging")
 
 ### Logs supported
 
@@ -45,6 +47,14 @@ It will also handle the logs like `info.log`, `error.log` that are a subset of t
 
 The definition of "parse" here means to turn the unstructured, possibly multi-line log output into structured data we can filter, mutate & forward to any supported Fluent Bit endpoint. 
 For the purposes of this image, we essentially chunk up the log lines into timestamp, level and message - message can be over multiple lines.
+As an example (taken from `tests/logs/memcached.log.000000.txt`):
+`2021-03-09T17:32:01.859344+00:00 INFO Couchbase version 6.6.0-7909 starting.`
+Will become (taken from `tests/logs/memcached.log.000000.txt.expected`):
+`[1615311121.859344000, {"filename":"/fluent-bit/test/logs/memcached.log.000000.txt","timestamp":"2021-03-09T17:32:01.859344+00:00","level":"INFO","message":"Couchbase version 6.6.0-7909 starting."}]`
+This is a structured stream made up of various fields which can be sent to any supported output (multiple potentially and/or different to other logs):
+* `"timestamp":"2021-03-09T17:32:01.859344+00:00"`
+* `"level":"INFO"`
+* `"message":"Couchbase version 6.6.0-7909 starting."`
 
 Every log is tagged individually to form its own stream within the log shipper.
 The tag format is `couchbase.log.<name>`. 
@@ -54,15 +64,20 @@ Other logs than the list above may be supported by the provided parsers as well.
 
 ## Technical Overview
 
-This image is essentially the official Fluent Bit image with an entrypoint watcher process that handles either restarting Fluent Bit on config change or pre-processing the rebalance reports.
+This image is essentially the official Fluent Bit image with an entrypoint watcher process that handles both restarting Fluent Bit on config change and pre-processing the rebalance reports.
+
+![Overview of image](docs/image-overview.png "Overview of image")
 
 ### Parsing
 For the purposes of this implementation, parsing is very simple as we’re not trying to extract any more information than the simple timestamp, log level and log message. 
 A few of the logs (http and JSON format ones - audit & rebalance reports) can have some extra fields extracted as it is straightforward but any significant processing is left for the consumer to manage.
 
+The intention is to keep it as simple as possible and produce a structured log stream that can be filtered or consumed with further processing downstream as required.
+
 For those logs with multiline output, the parser should capture everything up to the next log statement. In some cases this includes large content (e.g. Java thread dumps) but this is all treated as part of the log message for the consumer to work with.
 
 The parsers are provided in `conf/parsers-couchbase.conf` along with default configuration for each log file in `conf/couchbase/in-*.conf`.
+We use a separate config file per input type/parser configuration (log file type) to make is simpler to reuse for a custom configuration either in testing or by end users.
 
 ### Rebalance reports and dynamic configuration
 The official version of Fluent Bit does not support dynamic changes to its configuration: if you change the log shipping configuration then you have to restart it. 
@@ -94,18 +109,37 @@ Log redaction in flight has been demonstrated and is tested but will not be prov
 A tutorial is provided on how to configure this if required so refer to the Couchbase Autonomous Operator documentation for that.
 There may be a performance impact to redaction in flight and it will also complicate debugging of problems if the logs are auto-redacted within the cluster.
 
-To simplify usage we build everything required into the container image: this is a distroless image so has no OS support for hashing out of the box. 
-we therefore include the LUA implementation from: https://github.com/mpeterv/sha1 
+To simplify usage we build everything required into the container image: this is a minimal image so has no support for hashing out of the box. 
+we therefore include the LUA implementation from: https://github.com/mpeterv/sha1 . 
+Lua provides the best approach to dealing with redaction anyway so attaching a Lua hashing library made the most sense.
 
 Similarly any other log mutation could be done that is supported by Fluent Bit. 
 Using a LUA script provides a lot of flexibility but there are plenty of other simpler plugins to modify the content or destination of a log. 
 The recommendation when using LUA parsing is to dedicate a worker thread to it.
 
-### Specific parsers
+### Specific parser information
 
+#### couchbase_json_log_nanoseconds and couchbase_rebalance_report
+These are both JSON parsers so support a full JSON extraction/forwarding.
+There is no need to match lines in a legacy way with a regex.
+
+#### couchbase_http
+The HTTP parsers reuse the default Fluent Bit Apache2 regex with some minor changes.
+This means they do not provide a simple triplet of timestamp, level, message but instead include various fields from the message instead.
+
+#### couchbase_simple_log_mixed
 Some of the logs (FTS and eventing in the default configuration) provide a mixed timestamp output which is difficult to parse in one go.
-Instead the timestamps are extracted via a generic parser and then run through an additional stage to parse it in the appropriate format.
-This may not be required if it is acceptable to use local time, i.e. the time at which Fluent Bit tails that line in the log.
+```
+2021/03/09 17:32:15 cbauth: ...
+2021-03-09T17:32:15.303+00:00 [INFO] ...
+```
+Instead the timestamps are extracted via a generic parser and then could be run through an additional stage to parse it in the appropriate format.
+This may not be required if it is acceptable as per the default configuration to use local time, i.e. the time at which Fluent Bit tails that line in the log.
+
+#### couchbase_erlang_multiline
+The multi-line erlang parser originally parsed everything after the square bracket as the message.
+Unfortunately the regex parser does not seem to like a new line immediately after the bracket - with some text first then a new line it works fine.
+Therefore the message includes everything after the timestamp, this guarantees we get all multiline output and also anything else after timestamp.
 
 ## Usage
 
@@ -140,7 +174,7 @@ The `tests/run-tests.sh` script will then iterate over all expected output to co
 To help with verifying new output, a simple NodeJS tool is provided in `tools/log-verifier`. 
 This can be run locally or as an image against the files to check, when run as an image the file will need mounting into the container and passing as an argument.
 
-For the RHEL variant we make best effort to verify Fluent Bit is working using its unit tests however the only supported usage is of the `tail` input plugin to `stdout` output plugin pipeline used in the default configuration for the Couchbase Autonomous Operator. 
+For the Red Hat variant we make best effort to verify Fluent Bit is working using its unit tests however the only supported usage is of the `tail` input plugin to `stdout` output plugin pipeline used in the default configuration for the Couchbase Autonomous Operator. 
 
 ## Reporting Bugs and Issues
 Please use our official [JIRA board](https://issues.couchbase.com/projects/K8S/issues/?filter=allopenissues) to report any bugs and issues.
