@@ -1,3 +1,4 @@
+*.tar
 # Test output (if bind-mounted)
 test/logs/*.actual
 test/logs/rebalance-logs/
