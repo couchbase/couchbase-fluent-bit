@@ -1,0 +1,14 @@
+# Taken from Red Hat certification requirements: https://connect.redhat.com/zones/containers/container-certification-policy-guide
+# name: Name of the image
+# vendor: Company name
+# version: Version of the image
+# release: A number used to identify the specific build for this image
+# summary: A short overview of the application or component in this image
+# description:  A long description of the application or component in this image
+label-schema:
+  name: text
+  vendor: text
+  version: text #We have to use text for variables
+  release: text
+  summary: text
+  description: text

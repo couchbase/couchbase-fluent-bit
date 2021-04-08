@@ -1,7 +1,9 @@
 # Ignore everything by default then explicitly allow
 *
-
-!LICENSE
+# Include relevant documentation
+!README.md
+!licenses/
+# Now include all the files we need for functionality
 !bin/
 !conf/
 !redaction/

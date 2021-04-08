@@ -8,9 +8,9 @@ ARTIFACTS = build/artifacts/
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
-.PHONY: all build lint container container-rhel container-public container-lint container-scan dist test test-dist container-clean clean
+.PHONY: all build lint container container-rhel container-public container-lint container-scan container-rhel-checks dist test test-dist container-clean clean
 
-all: clean build lint container container-rhel container-lint container-scan test dist test-dist
+all: clean build lint container container-rhel container-lint container-scan container-rhel-checks test dist test-dist
 
 build: $(SOURCE) go.mod
 	for platform in linux darwin ; do \
@@ -22,7 +22,7 @@ image-artifacts: build
 	mkdir -p $(ARTIFACTS)/bin/linux
 	cp bin/linux/couchbase-watcher $(ARTIFACTS)/bin/linux
 	cp Dockerfile* LICENSE README.md $(ARTIFACTS)
-	cp -rv conf test redaction $(ARTIFACTS)
+	cp -rv conf licenses redaction test $(ARTIFACTS)
 
 # This target (and only this target) is invoked by the production build job.
 # This job will archive all files that end up in the dist/ directory.
@@ -51,13 +51,27 @@ container-rhel: build
 
 container-lint: build lint
 	docker run --rm -i hadolint/hadolint < Dockerfile 
-	docker run --rm -i hadolint/hadolint < Dockerfile.rhel
+	docker run --rm -i -v $(CURDIR)/.hadolint.yaml.rhel:/root/.config/hadolint.yaml:ro hadolint/hadolint < Dockerfile.rhel
 
 container-scan: container container-rhel
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
 		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
 		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \
+		${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(CURDIR)/.dive.ci.rhel:/root/.config/dive.ci:ro -e CI=true wagoodman/dive \
+		--ci-config /root/.config/dive.ci ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
+
+# Check for vulnerabilites and some of the requirements of Red Hat certification
+# Licenses provided
+# Layer count <40
+# Goal here is to fail early with some simple checks
+container-rhel-checks: container-scan
+	docker run --rm -it ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} ls -l /licenses/
+	test $(shell docker image history -q ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}| wc -l) -lt 40
+	docker save -o fluent-bit-rhel.tar ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
+	go run github.com/heroku/terrier -cfg terrier.cfg.yml && rm -f fluent-bit-rhel.tar
 
 test: lint container container-rhel container-lint
 	docker run --rm -it ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}

@@ -24,27 +24,11 @@ pipeline {
         sh 'make lint'
       }
     }
-    // Cannot run the following without a container runtime
-    // stage('Build containers') {
-    //   steps {
-    //     sh 'make container'
-    //   }
-    // }
-    // stage('Lint containers') {
-    //   steps {
-    //     sh 'make container-lint'
-    //   }
-    // }
-    // stage('Test containers') {
-    //   steps {
-    //     sh 'make test'
-    //   }
-    // }
-    // stage('Full build and test') {
-    //   steps {
-    //     sh 'make'
-    //   }
-    // }
+    stage('Test packaging for build') {
+      steps {
+        sh 'make dist'
+      }
+    }
   }
 
   post {

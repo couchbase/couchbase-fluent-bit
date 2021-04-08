@@ -56,6 +56,10 @@ RUN microdnf update && microdnf install -y openssl libpq systemd && microdnf cle
 # RUN groupadd -r fluentbit && useradd --no-log-init -r -g fluentbit fluentbit
 # USER fluentbit
 
+# Ensure we add licensing and help information for certification requirements
+COPY licenses/* /licenses/
+COPY README.md /help.1
+
 COPY --from=builder /fluent-bit /fluent-bit
 
 # See Dockerfile for details - this should all be equivalent to the standard image

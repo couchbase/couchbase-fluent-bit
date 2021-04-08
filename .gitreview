@@ -2,4 +2,4 @@
 host=review.couchbase.org
 port=29418
 project=couchbase-fluent-bit.git
-defaultbranch=master
+defaultbranch=main

@@ -45,6 +45,9 @@ CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 # We need an un-targeted build stage to support the build pipeline
 FROM production
 LABEL description="Couchbase Fluent Bit image with support for config reload, pre-processing and redaction" vendor="Couchbase" maintainer="docker@couchbase.com"
+# Ensure we include any relevant docs
+COPY licenses/* /licenses/
+COPY README.md /help.1
 # Copying the base image to expose for the HTTP server if enabled
 EXPOSE 2020
 # Entry point - run our custom binary

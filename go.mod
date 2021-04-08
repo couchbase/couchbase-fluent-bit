@@ -14,6 +14,7 @@ require (
 	github.com/golangci/gosec v0.0.0-20190211064107-66fb7fc33547 // indirect
 	github.com/golangci/ineffassign v0.0.0-20190609212857-42439a7714cc // indirect
 	github.com/golangci/prealloc v0.0.0-20180630174525-215b22d4de21 // indirect
+	github.com/heroku/terrier v0.0.0-20200623122804-c3da2d1e1468 // indirect
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/oklog/run v1.1.0
 	github.com/shirou/gopsutil v0.0.0-20180427012116-c95755e4bcd7 // indirect
