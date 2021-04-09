@@ -1,4 +1,4 @@
-module github.com/couchbase/couchbase-operator/fluent-bit
+module github.com/couchbase/fluent-bit
 
 go 1.16
 
@@ -19,6 +19,8 @@ require (
 	github.com/oklog/run v1.1.0
 	github.com/shirou/gopsutil v0.0.0-20180427012116-c95755e4bcd7 // indirect
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.16.0 // indirect
 	golang.org/x/sys v0.0.0-20210228012217-479acdf4ea46 // indirect
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/gemnasium/logrus-airbrake-hook.v2 v2.1.2 // indirect

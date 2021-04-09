@@ -1,3 +1,4 @@
+*.DS_Store
 *.tar
 # Test output (if bind-mounted)
 test/logs/*.actual

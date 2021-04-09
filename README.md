@@ -7,10 +7,10 @@ The Couchbase Operator Logging image is an image based on the official [Fluent B
 2. Rebalace report pre-processing - the rebalance reports produced by Couchbase need some additional pre-processing before they can be parsed by Fluent Bit.
 3. SHA1 LUA hashing implementation and redaction support included (but not enabled by default).
 
-This image is intended to be used as a sidecar with a Couchbase Autonomous Operator deployment to automatically ship various couchbase logs.
-The log shipping can be dynmically configured per namespace/Couchbase cluster via a standard Kubernetes secret which is mounted then as the configuration directory.
+This image is intended to be used as a sidecar with a Couchbase Autonomous Operator deployment to automatically stream various couchbase logs.
+The log streaming can be dynmically configured per namespace/Couchbase cluster via a standard Kubernetes secret which is mounted then as the configuration directory.
 
-The image could also be used with an on-premise deployment to ship local logs in the same fashion although this is not currently tested.
+The image could also be used with an on-premise deployment to ship local logs in the same fashion although this is not currently officially supported.
 
 To help provide the capability in this image we make use of other OSS:
 * https://github.com/kubesphere/fluent-bit
@@ -119,6 +119,8 @@ The recommendation when using LUA parsing is to dedicate a worker thread to it.
 
 ### Specific parser information
 
+Each of these sections references the specific parser set up in conf/parsers-couchbase.conf.
+
 #### couchbase_json_log_nanoseconds and couchbase_rebalance_report
 These are both JSON parsers so support a full JSON extraction/forwarding.
 There is no need to match lines in a legacy way with a regex.
@@ -141,6 +143,10 @@ The multi-line erlang parser originally parsed everything after the square brack
 Unfortunately the regex parser does not seem to like a new line immediately after the bracket - with some text first then a new line it works fine.
 Therefore the message includes everything after the timestamp, this guarantees we get all multiline output and also anything else after timestamp.
 
+#### couchbase_java_multiline
+The Java logs for some reason restrict the log level to 4 characters.
+This may affect things like Grafana integration as `DEBU` and `ERRO` are not a supported default expression: https://grafana.com/docs/grafana/latest/explore/logs-integration/
+
 ## Usage
 
 The official Couchbase Autonomous Operator documentation provides full details on using this with Kubernetes including additional tutorials on consuming logs with Loki or sending to Azure, S3, etc.
@@ -150,10 +156,55 @@ If the capabilities listed above are not required then the official Fluent Bit i
 
 This image is only intended to be used with Kubernetes although it may be usable as a standalone Docker image either for a containerised or on-premise deployment but this is not an officially supported configuration.
 
+An example local configuration running three Couchbase nodes using docker-compose:
+```
+version: "3.9"
+services:
+    couchbase-server1:
+        container_name: db1
+        image: couchbase:6.6.1
+        ports:
+          - "8091-8096:8091-8096"
+          - "11210-11211:11210-11211"
+        volumes:
+          - log-volume:/opt/couchbase/var/lib/couchbase/logs/:rw
+    couchbase-server2:
+        container_name: db2
+        image: couchbase:6.6.1
+        expose:
+            - "8091-8096"
+            - "11210-11211"
+    couchbase-server3:
+        container_name: db3
+        image: couchbase:6.6.1
+        expose:
+            - "8091-8096"
+            - "11210-11211"
+    log-streamer:
+        container_name: logging
+        image: couchbase/fluent-bit:1.0.0
+        depends_on:
+            - couchbase-server1
+        environment:
+            - COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs
+        volumes:
+          - log-volume:/opt/couchbase/var/lib/couchbase/logs/:ro
+volumes:
+    log-volume:
+```
+The volume could be replaced with a bind mount for an on-premise Couchbase Server deployment - and the container could be run directly with a container runtime rather than docker-compose (as per Testing example below.)
+
+### Configuration
+
 | Environment variable | Description | Default |
 | --- | --- | --- |
-| COUCHBASE_LOGS | The directory in which to find the various Couchbase logs we are interested in | /opt/couchbase/var/couchbase/logs | 
-| COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports | /tmp/rebalance-logs |
+| COUCHBASE_LOGS | The directory in which to find the various Couchbase logs we are interested in. | /opt/couchbase/var/couchbase/logs | 
+| COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
+| COUCHBASE_LOGS_DYNAMIC_CONFIG | The directory to watch for config changes and restart Fluent Bit. | /fluent-bit/config |
+| COUCHBASE_LOGS_CONFIG_FILE | The config file to use when starting Fluent Bit. | /fluent-bit/config/fluent-bit.conf |
+| COUCHBASE_LOGS_BINARY | The Fluent Bit binary to launch. | /fluent-bit/bin/fluent-bit |
+
+Be careful to make sure you have enough file descriptors configured as available to use this functionality, particularly for local development, e.g. KIND.
 
 ## Building
 

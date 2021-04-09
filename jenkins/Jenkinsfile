@@ -24,6 +24,11 @@ pipeline {
         sh 'make lint'
       }
     }
+    stage('Unit tests') {
+      steps {
+        sh 'make test-unit'
+      }
+    }
     stage('Test packaging for build') {
       steps {
         sh 'make dist'

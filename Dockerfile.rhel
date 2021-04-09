@@ -63,13 +63,15 @@ COPY README.md /help.1
 COPY --from=builder /fluent-bit /fluent-bit
 
 # See Dockerfile for details - this should all be equivalent to the standard image
+ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
 COPY conf/ /fluent-bit/etc/
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
 ENV COUCHBASE_LOGS /opt/couchbase/var/couchbase/logs
 VOLUME /fluent-bit/config
-ENV FLUENT_BIT_DYNAMIC_CONFIG /fluent-bit/config
+ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
+ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 

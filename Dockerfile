@@ -1,5 +1,6 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
 FROM fluent/fluent-bit:1.7.3 as production
+ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 # We need to layer on a binary to pre-process the rebalance reports and watch for config changes
 COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
@@ -15,9 +16,10 @@ ENV COUCHBASE_LOGS /opt/couchbase/var/couchbase/logs
 # This way we can keep using the parsers defined without having to re-define them.
 # If we try to mount via sub-path then it won't update: https://github.com/kubernetes/kubernetes/issues/50345
 VOLUME /fluent-bit/config
-ENV FLUENT_BIT_DYNAMIC_CONFIG /fluent-bit/config
+ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 # Put a copy of the config in the area we want to monitor
 COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
+ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
 COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/

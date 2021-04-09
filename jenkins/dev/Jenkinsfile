@@ -1,0 +1,79 @@
+/**
+ * One pipeline to rule them all...
+ * Warning, this belongs to development and must be fast and stable, do not modify without
+ * good reason!
+ */
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+
+    // Discard any stale builds so we don't fill up the disk.
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '30',
+        artifactNumToKeepStr: '50',
+        daysToKeepStr: '30',
+        numToKeepStr: '50',
+      )
+    )
+  }
+
+  parameters {
+    string(name: 'refspec', defaultValue: 'refs/heads/master', description: 'Gerrit ref spec of your source tree')
+  }
+
+  environment {
+    GOVERSION = '1.16.2'
+    GOROOT = "${env.WORKSPACE}/go"
+    PATH = "${env.WORKSPACE}/go/bin:$PATH"
+    DOCKER_CREDENTIALS = credentials('dockerhub-couchbaseqe')
+    GCLOUD_SERVICE_TOKEN = credentials('google-cloud-couchbase-operator')
+  }
+
+  stages {
+    stage('Build Name') {
+      steps {
+        // The build name must be unique, or the JUnit trend will crap out.
+        buildName "#${BUILD_NUMBER} ${sh(script: 'git log --oneline --format=%B HEAD | head -n 1', returnStdout: true)}"
+        buildDescription "Patchset: ${params.refspec.split('/').last()}"
+      }
+    }
+
+    stage('Install Go') {
+      steps {
+        sh 'wget -q -O- https://dl.google.com/go/go${GOVERSION}.linux-amd64.tar.gz | tar xz'
+      }
+    }
+
+    stage('Build & test') {
+      steps {
+        sh 'make clean all'
+      }
+    }
+
+    stage('Build Container Images') {
+      steps {
+        sh 'docker login -u ${DOCKER_CREDENTIALS_USR} -p ${DOCKER_CREDENTIALS_PSW}'
+        sh 'make container-public -e DOCKER_USER=${DOCKER_CREDENTIALS_USR} DOCKER_TAG=${GIT_COMMIT}'
+      }
+
+      post {
+        always {
+          // Remove old docker images now, this stops disk from filling up and minimises risk
+          // of this not being called due to a job cancellation.
+          sh 'make container-clean -e DOCKER_USER=${DOCKER_CREDENTIALS_USR} DOCKER_TAG=${GIT_COMMIT}'
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      sh 'make clean'
+      // Clean up the workspace to free disk space.
+      cleanWs()
+    }
+  }
+}

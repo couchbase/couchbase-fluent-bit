@@ -8,14 +8,14 @@ ARTIFACTS = build/artifacts/
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
-.PHONY: all build lint container container-rhel container-public container-lint container-scan container-rhel-checks dist test test-dist container-clean clean
+.PHONY: all build lint test-unit container container-rhel container-public container-lint container-scan container-rhel-checks dist test test-dist container-clean clean
 
-all: clean build lint container container-rhel container-lint container-scan container-rhel-checks test dist test-dist
+all: clean build lint test-unit container container-rhel container-lint container-scan container-rhel-checks test dist test-dist
 
 build: $(SOURCE) go.mod
 	for platform in linux darwin ; do \
 	  echo "Building $$platform binary" ; \
-	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -ldflags="-s -w" -o bin/$$platform/couchbase-watcher ; \
+	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -ldflags="-s -w" -o bin/$$platform/couchbase-watcher ./cmd ; \
 	done
 
 image-artifacts: build
@@ -33,7 +33,10 @@ dist: image-artifacts
 	rm -rf $(ARTIFACTS)
 
 lint:
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./main.go
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./cmd/... ./pkg/...
+
+test-unit:
+	go test -timeout 30s -v ./pkg/...
 
 # NOTE: This target is only for local development. While we use this Dockerfile
 # (for now), the actual "docker build" command is located in the Jenkins job
@@ -73,7 +76,7 @@ container-rhel-checks: container-scan
 	docker save -o fluent-bit-rhel.tar ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 	go run github.com/heroku/terrier -cfg terrier.cfg.yml && rm -f fluent-bit-rhel.tar
 
-test: lint container container-rhel container-lint
+test: test-unit container container-rhel container-lint
 	docker run --rm -it ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
 	docker run --rm -it ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}
 

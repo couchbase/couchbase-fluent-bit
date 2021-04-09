@@ -1,0 +1,33 @@
+run:
+  timeout: 1m
+
+linters:
+  # Enable all linters
+  presets:
+  - bugs
+  - comment
+  - complexity
+  - error
+  - format
+  - import
+  - metalinter
+  - module
+  - performance
+  - sql
+  - style
+  - test
+  - unused
+  # Deal with deprecation warnings
+  enable:
+  - exportloopref
+  disable:
+  - interfacer
+  - maligned
+  - scopelint
+  - gofumpt # as per operator
+  - lll # long lines as per operator
+  - gochecknoglobals # global variables as per operator (and for logging)
+linters-settings:
+  cyclop:
+    # the maximal code complexity to report
+    max-complexity: 11
