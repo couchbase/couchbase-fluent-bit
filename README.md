@@ -2,7 +2,7 @@
 
 ## Summary
 
-The Couchbase Operator Logging image is an image based on the official [Fluent Bit](https://fluentbit.io/) [image](https://hub.docker.com/r/fluent/fluent-bit/) with some additional support for the following:
+The Couchbase Fluent Bit image is an image based on the official [Fluent Bit](https://fluentbit.io/) [image](https://hub.docker.com/r/fluent/fluent-bit/) with some additional support for the following:
 1. Dynamic configuration reload - changes to the configuration are watched for and when detected trigger a restart of Fluent Bit to pick up the new configuration.
 2. Rebalace report pre-processing - the rebalance reports produced by Couchbase need some additional pre-processing before they can be parsed by Fluent Bit.
 3. SHA1 LUA hashing implementation and redaction support included (but not enabled by default).
@@ -146,6 +146,23 @@ Therefore the message includes everything after the timestamp, this guarantees w
 #### couchbase_java_multiline
 The Java logs for some reason restrict the log level to 4 characters.
 This may affect things like Grafana integration as `DEBU` and `ERRO` are not a supported default expression: https://grafana.com/docs/grafana/latest/explore/logs-integration/
+
+A possible option is to add some extra filters to cope with picking up the invalid fields:
+```
+[FILTER]
+    Name    modify
+    Match   couchbase.log.*
+    Condition Key_value_equals level DEBU
+    Set level DEBUG
+
+[FILTER]
+    Name    modify
+    Match   couchbase.log.*
+    Condition Key_value_equals level ERRO
+    Set level ERROR
+```
+A similar approach can be taken to sort out the various cases used across all the logs.
+This is not done by default just to keep things simple and fast.
 
 ## Usage
 
