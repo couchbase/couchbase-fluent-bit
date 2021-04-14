@@ -194,6 +194,10 @@ volumes:
 ```
 The volume could be replaced with a bind mount for an on-premise Couchbase Server deployment - and the container could be run directly with a container runtime rather than docker-compose (as per Testing example below.)
 
+Note that this image copes with multi-line input logs but the default output to standard output will still be over multiple lines for these same messages.
+This means if you are collecting this information with a Daemonset (e.g. another Fluent Bit or PromTail) reading the container logs (from standard output) then you will need to capture multi-line output.
+It will all be inside a standard [`msgpack`](https://msgpack.org/) Fluent Bit record format though so can be parsed that way.
+
 ### Configuration
 
 | Environment variable | Description | Default |
@@ -229,6 +233,13 @@ For the Red Hat variant we make best effort to verify Fluent Bit is working usin
 
 ## Reporting Bugs and Issues
 Please use our official [JIRA board](https://issues.couchbase.com/projects/K8S/issues/?filter=allopenissues) to report any bugs and issues.
+
+## Release tagging and branching
+Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
+Updates will be pushed to the `main` branch often and then tagged once released as a new image version.
+Tags will not be moved after release, even just for a documentation update - this should trigger a new release or just be available as the latest version on `main`.
+
+The branching strategy is to minimise any branches other than `main` following the standard [GitHub flow model](https://guides.github.com/introduction/flow/).
 
 ## License
 
