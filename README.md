@@ -179,7 +179,7 @@ version: "3.9"
 services:
     couchbase-server1:
         container_name: db1
-        image: couchbase:6.6.1
+        image: couchbase:6.6.2
         ports:
           - "8091-8096:8091-8096"
           - "11210-11211:11210-11211"
@@ -187,19 +187,19 @@ services:
           - log-volume:/opt/couchbase/var/lib/couchbase/logs/:rw
     couchbase-server2:
         container_name: db2
-        image: couchbase:6.6.1
+        image: couchbase:6.6.2
         expose:
             - "8091-8096"
             - "11210-11211"
     couchbase-server3:
         container_name: db3
-        image: couchbase:6.6.1
+        image: couchbase:6.6.2
         expose:
             - "8091-8096"
             - "11210-11211"
     log-streamer:
         container_name: logging
-        image: couchbase/fluent-bit:1.0.0
+        image: couchbase/fluent-bit:1.0.1
         depends_on:
             - couchbase-server1
         environment:

@@ -1,6 +1,6 @@
 pipeline {
   agent {
-    label 'ubuntu-18.04 && master'
+    label 'docker'
   }
 
   environment {
@@ -14,30 +14,16 @@ pipeline {
         sh 'wget -q -O- https://dl.google.com/go/go${GOVERSION}.linux-amd64.tar.gz | tar xz'
       }
     }
-    stage('Build code') {
+    stage('Build & test') {
       steps {
-        sh 'make build'
-      }
-    }
-    stage('Lint code') {
-      steps {
-        sh 'make lint'
-      }
-    }
-    stage('Unit tests') {
-      steps {
-        sh 'make test-unit'
-      }
-    }
-    stage('Test packaging for build') {
-      steps {
-        sh 'make dist'
+        sh 'make clean all'
       }
     }
   }
 
   post {
     always {
+      sh 'make clean'
       cleanWs()
     }
   }

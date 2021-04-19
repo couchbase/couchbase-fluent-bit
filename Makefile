@@ -54,8 +54,9 @@ container-rhel: build
 
 container-lint: build lint
 	docker run --rm -i hadolint/hadolint < Dockerfile 
-	docker run --rm -i -v $(CURDIR)/.hadolint.yaml.rhel:/root/.config/hadolint.yaml:ro hadolint/hadolint < Dockerfile.rhel
+	docker run --rm -i hadolint/hadolint < Dockerfile.rhel
 
+# No support for Dive to use bind mounts for the RHEL release so use local Go module
 container-scan: container container-rhel
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
 		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
@@ -63,22 +64,28 @@ container-scan: container container-rhel
 		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \
 		${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(CURDIR)/.dive.ci.rhel:/root/.config/dive.ci:ro -e CI=true wagoodman/dive \
-		--ci-config /root/.config/dive.ci ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
+	go run github.com/wagoodman/dive --ci-config $(CURDIR)/.dive.ci.rhel --ci \
+		${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 
 # Check for vulnerabilites and some of the requirements of Red Hat certification
+# Taken from Red Hat certification requirements: https://connect.redhat.com/zones/containers/container-certification-policy-guide
 # Licenses provided
 # Layer count <40
+# Labels present
 # Goal here is to fail early with some simple checks
 container-rhel-checks: container-scan
-	docker run --rm -it ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} ls -l /licenses/
+	docker run --rm ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} ls -l /licenses/
 	test $(shell docker image history -q ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}| wc -l) -lt 40
+	for label in name vendor version release summary description ; do \
+		echo "Checking for label $$label" ; \
+		docker inspect --format '{{ index .Config.Labels }}' ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}| grep -q "$$label:" ; \
+	done
 	docker save -o fluent-bit-rhel.tar ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 	go run github.com/heroku/terrier -cfg terrier.cfg.yml && rm -f fluent-bit-rhel.tar
 
 test: test-unit container container-rhel container-lint
-	docker run --rm -it ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
-	docker run --rm -it ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}
+	docker run --rm ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
+	docker run --rm ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}
 
 # This target pushes the containers to a public repository.
 # A typical one liner to deploy to the cloud would be:
@@ -96,6 +103,7 @@ test-dist: dist
 	docker build -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
 	docker build -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
 
+# Remove our images then remove dangling ones to prevent any caching
 container-clean:
 	docker rmi -f ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} \
 				  ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} \
@@ -103,6 +111,7 @@ container-clean:
 				  ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} \
 				  ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG} \
 				  ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
+	docker image prune --force
 
 clean: container-clean
 	rm -rf $(ARTIFACTS) bin/ dist/ test-dist/
