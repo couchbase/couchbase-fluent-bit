@@ -4,9 +4,9 @@ RUN dnf update -y && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 m
 
 ARG FLUENT_BIT_VER=1.7.3
 ADD https://github.com/fluent/fluent-bit/archive/refs/tags/v${FLUENT_BIT_VER}.zip /source.zip
-RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src
-RUN unzip /source.zip -d /tmp/src && mv /tmp/src/fluent-bit-*/* /tmp/src/
-RUN rm -rf /tmp/src/build/*
+RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src \
+      && unzip /source.zip -d /tmp/src && mv /tmp/src/fluent-bit-*/* /tmp/src/ \
+      && rm -rf /tmp/src/build/*
 
 # We require flex & bison which are not available for UBI to build record accessor and this is also used in some other output plugins
 # We could build 1.6.10 as the 1.7 series will not build without RA: https://github.com/fluent/fluent-bit/issues/3097
