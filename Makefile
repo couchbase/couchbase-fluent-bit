@@ -8,6 +8,9 @@ ARTIFACTS = build/artifacts/
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
+# Set to empty to disable RHEL unit testing
+MAKE_ADDITIONAL_TARGETS=test
+
 .PHONY: all build lint test-unit container container-rhel container-public container-lint container-scan container-rhel-checks dist test test-dist container-clean clean
 
 all: clean build lint test-unit container container-rhel container-lint container-scan container-rhel-checks test dist test-dist
@@ -49,8 +52,8 @@ container: build
 	docker build -f Dockerfile --target test -t ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} .
 
 container-rhel: build
-	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) -t ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} .
-	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) --target test -t ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} .
+	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) --build-arg MAKE_ADDITIONAL_TARGETS=${MAKE_ADDITIONAL_TARGETS} -t ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} .
+	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) --build-arg MAKE_ADDITIONAL_TARGETS=${MAKE_ADDITIONAL_TARGETS} --target test -t ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} .
 
 container-lint: build lint
 	docker run --rm -i hadolint/hadolint < Dockerfile 
@@ -101,7 +104,7 @@ test-dist: dist
 	mkdir -p test-dist/
 	tar -xzvf dist/couchbase-fluent-bit-image_$(productVersion).tgz -C test-dist/
 	docker build -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
-	docker build -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
+	docker build -f test-dist/Dockerfile.rhel --build-arg MAKE_ADDITIONAL_TARGETS=${MAKE_ADDITIONAL_TARGETS} test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
 
 # Remove our images then remove dangling ones to prevent any caching
 container-clean:

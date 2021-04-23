@@ -1,5 +1,5 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
-FROM fluent/fluent-bit:1.7.3 as production
+FROM fluent/fluent-bit:1.7.4 as production
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 # We need to layer on a binary to pre-process the rebalance reports and watch for config changes
@@ -27,7 +27,7 @@ COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-FROM fluent/fluent-bit:1.7.3-debug as test
+FROM fluent/fluent-bit:1.7.4-debug as test
 
 COPY --from=production /fluent-bit/ /fluent-bit/
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial

@@ -15,7 +15,7 @@ The image could also be used with an on-premise deployment to ship local logs in
 To help provide the capability in this image we make use of other OSS:
 * https://github.com/kubesphere/fluent-bit
 * https://github.com/mpeterv/sha1
-* https://github.com/fluent/fluent-bit 
+* https://github.com/fluent/fluent-bit
 
 ![Overview of logging sidecar](docs/overview-of-sidecar-logging.png "Overview of sidecar logging")
 
@@ -45,7 +45,7 @@ This image is used to parse and send the following logs to standard output by de
 
 It will also handle the logs like `info.log`, `error.log` that are a subset of the full `debug.log` - there is no point parsing all these logs as it will duplicate the information.
 
-The definition of "parse" here means to turn the unstructured, possibly multi-line log output into structured data we can filter, mutate & forward to any supported Fluent Bit endpoint. 
+The definition of "parse" here means to turn the unstructured, possibly multi-line log output into structured data we can filter, mutate & forward to any supported Fluent Bit endpoint.
 For the purposes of this image, we essentially chunk up the log lines into timestamp, level and message - message can be over multiple lines.
 As an example (taken from `tests/logs/memcached.log.000000.txt`):
 `2021-03-09T17:32:01.859344+00:00 INFO Couchbase version 6.6.0-7909 starting.`
@@ -57,7 +57,7 @@ This is a structured stream made up of various fields which can be sent to any s
 * `"message":"Couchbase version 6.6.0-7909 starting."`
 
 Every log is tagged individually to form its own stream within the log shipper.
-The tag format is `couchbase.log.<name>`. 
+The tag format is `couchbase.log.<name>`.
 Each stream can be managed independently so refer to the official Fluent Bit documentation for full details on the extensive capability and configuration available.
 
 Other logs than the list above may be supported by the provided parsers as well.
@@ -69,7 +69,7 @@ This image is essentially the official Fluent Bit image with an entrypoint watch
 ![Overview of image](docs/image-overview.png "Overview of image")
 
 ### Parsing
-For the purposes of this implementation, parsing is very simple as we’re not trying to extract any more information than the simple timestamp, log level and log message. 
+For the purposes of this implementation, parsing is very simple as we’re not trying to extract any more information than the simple timestamp, log level and log message.
 A few of the logs (http and JSON format ones - audit & rebalance reports) can have some extra fields extracted as it is straightforward but any significant processing is left for the consumer to manage.
 
 The intention is to keep it as simple as possible and produce a structured log stream that can be filtered or consumed with further processing downstream as required.
@@ -80,41 +80,41 @@ The parsers are provided in `conf/parsers-couchbase.conf` along with default con
 We use a separate config file per input type/parser configuration (log file type) to make is simpler to reuse for a custom configuration either in testing or by end users.
 
 ### Rebalance reports and dynamic configuration
-The official version of Fluent Bit does not support dynamic changes to its configuration: if you change the log shipping configuration then you have to restart it. 
+The official version of Fluent Bit does not support dynamic changes to its configuration: if you change the log shipping configuration then you have to restart it.
 We cannot restart the pods without triggering rebalance.
 
-The rebalance reports have a bit of an issue with the default tail plugin: they are a file with no new lines. 
-The full JSON dump of the report is all over a single line which can be quite large (not for a log file but for a single line in a log file). 
-The tail plugin works on a per-line basis so cannot handle the reports as they currently are. 
+The rebalance reports have a bit of an issue with the default tail plugin: they are a file with no new lines.
+The full JSON dump of the report is all over a single line which can be quite large (not for a log file but for a single line in a log file).
+The tail plugin works on a per-line basis so cannot handle the reports as they currently are.
 Additionally there is the question of which timestamp to use as the “log” timestamp - a rebalance report can have multiple ones using common tags.
 
-We have solved both these problems by forking the Kubesphere solution (a fork from the official image) to resolve the dynamic configuration issue. 
-This watches for config file changes and then restarts Fluent Bit to pick up the new configuration but all within the container. 
-We can extend this to handle the rebalance reports: we watch for them, when we see one we copy it to a temporary location with any pre-processing we want done and then Fluent Bit reads the copy. 
+We have solved both these problems by forking the Kubesphere solution (a fork from the official image) to resolve the dynamic configuration issue.
+This watches for config file changes and then restarts Fluent Bit to pick up the new configuration but all within the container.
+We can extend this to handle the rebalance reports: we watch for them, when we see one we copy it to a temporary location with any pre-processing we want done and then Fluent Bit reads the copy.
 We copy it for these reasons rather than updating in place:
 1. No change to the original log or anything reliant on it (e.g. rotation).
-2. The logging sidecar deliberately has no write access to the log volume so it cannot modify any logs. 
+2. The logging sidecar deliberately has no write access to the log volume so it cannot modify any logs.
 3. The log timestamp can be collected from the rebalance report name which includes the time it was created.
 
-Whilst Fluent Bit is restarting, no logs will be shipped out of the container. 
-We could re-parse logs but this would then lead to duplicate entries from previously parsed logs. 
+Whilst Fluent Bit is restarting, no logs will be shipped out of the container.
+We could re-parse logs but this would then lead to duplicate entries from previously parsed logs.
 The intention is that reconfiguration is an asynchronous un-common operation so the temporary potential loss of logs is acceptable.
 
-Interestingly as part of this work, we discovered that the `exec` plugin is not usable in a container without `/bin/sh`, i.e. all the official ones including the debug variant with busybox. 
+Interestingly as part of this work, we discovered that the `exec` plugin is not usable in a container without `/bin/sh`, i.e. all the official ones including the debug variant with busybox.
 The original intention was to use this to process the log file but that was impossible: even with a compiled binary it still must be invoked via `/bin/sh`.
 
 ### Redaction
-Log redaction in flight has been demonstrated and is tested but will not be provided by default. 
+Log redaction in flight has been demonstrated and is tested but will not be provided by default.
 
 A tutorial is provided on how to configure this if required so refer to the Couchbase Autonomous Operator documentation for that.
 There may be a performance impact to redaction in flight and it will also complicate debugging of problems if the logs are auto-redacted within the cluster.
 
-To simplify usage we build everything required into the container image: this is a minimal image so has no support for hashing out of the box. 
-we therefore include the LUA implementation from: https://github.com/mpeterv/sha1 . 
+To simplify usage we build everything required into the container image: this is a minimal image so has no support for hashing out of the box.
+we therefore include the LUA implementation from: https://github.com/mpeterv/sha1 .
 Lua provides the best approach to dealing with redaction anyway so attaching a Lua hashing library made the most sense.
 
-Similarly any other log mutation could be done that is supported by Fluent Bit. 
-Using a LUA script provides a lot of flexibility but there are plenty of other simpler plugins to modify the content or destination of a log. 
+Similarly any other log mutation could be done that is supported by Fluent Bit.
+Using a LUA script provides a lot of flexibility but there are plenty of other simpler plugins to modify the content or destination of a log.
 The recommendation when using LUA parsing is to dedicate a worker thread to it.
 
 ### Specific parser information
@@ -143,32 +143,11 @@ The multi-line erlang parser originally parsed everything after the square brack
 Unfortunately the regex parser does not seem to like a new line immediately after the bracket - with some text first then a new line it works fine.
 Therefore the message includes everything after the timestamp, this guarantees we get all multiline output and also anything else after timestamp.
 
-#### couchbase_java_multiline
-The Java logs for some reason restrict the log level to 4 characters.
-This may affect things like Grafana integration as `DEBU` and `ERRO` are not a supported default expression: https://grafana.com/docs/grafana/latest/explore/logs-integration/
-
-A possible option is to add some extra filters to cope with picking up the invalid fields:
-```
-[FILTER]
-    Name    modify
-    Match   couchbase.log.*
-    Condition Key_value_equals level DEBU
-    Set level DEBUG
-
-[FILTER]
-    Name    modify
-    Match   couchbase.log.*
-    Condition Key_value_equals level ERRO
-    Set level ERROR
-```
-A similar approach can be taken to sort out the various cases used across all the logs.
-This is not done by default just to keep things simple and fast.
-
 ## Usage
 
 The official Couchbase Autonomous Operator documentation provides full details on using this with Kubernetes including additional tutorials on consuming logs with Loki or sending to Azure, S3, etc.
 
-The image is basically identical to the official Fluent Bit image and can be used in the same fashion. 
+The image is basically identical to the official Fluent Bit image and can be used in the same fashion.
 If the capabilities listed above are not required then the official Fluent Bit image can be used as well.
 
 This image is only intended to be used with Kubernetes although it may be usable as a standalone Docker image either for a containerised or on-premise deployment but this is not an officially supported configuration.
@@ -215,11 +194,14 @@ Note that this image copes with multi-line input logs but the default output to 
 This means if you are collecting this information with a Daemonset (e.g. another Fluent Bit or PromTail) reading the container logs (from standard output) then you will need to capture multi-line output.
 It will all be inside a standard [`msgpack`](https://msgpack.org/) Fluent Bit record format though so can be parsed that way.
 
+A full example local [Loki](https://grafana.com/docs/loki/latest/overview/) stack deployment (Loki+Grafana - configured) is also provided in the [tools/loki-stack](tools/loki-stack/) directory, this can be run via a simple `docker compose up` command.
+The Grafana instance will then be exposed via `localhost:3000`.
+
 ### Configuration
 
 | Environment variable | Description | Default |
 | --- | --- | --- |
-| COUCHBASE_LOGS | The directory in which to find the various Couchbase logs we are interested in. | /opt/couchbase/var/couchbase/logs | 
+| COUCHBASE_LOGS | The directory in which to find the various Couchbase logs we are interested in. | /opt/couchbase/var/couchbase/logs |
 | COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
 | COUCHBASE_LOGS_DYNAMIC_CONFIG | The directory to watch for config changes and restart Fluent Bit. | /fluent-bit/config |
 | COUCHBASE_LOGS_CONFIG_FILE | The config file to use when starting Fluent Bit. | /fluent-bit/config/fluent-bit.conf |
@@ -243,10 +225,10 @@ The directory should be made up of matching pairs of logs and expected output in
 The container will run the Couchbase Fluent Bit image against each log file in turn with some basic sanity checks and produce an output file named `<name>.log.actual`.
 The `tests/run-tests.sh` script will then iterate over all expected output to compare it against actual output.
 
-To help with verifying new output, a simple NodeJS tool is provided in `tools/log-verifier`. 
+To help with verifying new output, a simple NodeJS tool is provided in `tools/log-verifier`.
 This can be run locally or as an image against the files to check, when run as an image the file will need mounting into the container and passing as an argument.
 
-For the Red Hat variant we make best effort to verify Fluent Bit is working using its unit tests however the only supported usage is of the `tail` input plugin to `stdout` output plugin pipeline used in the default configuration for the Couchbase Autonomous Operator. 
+For the Red Hat variant we make best effort to verify Fluent Bit is working using its unit tests however the only supported usage is of the `tail` input plugin to `stdout` output plugin pipeline used in the default configuration for the Couchbase Autonomous Operator.
 
 ## Reporting Bugs and Issues
 Please use our official [JIRA board](https://issues.couchbase.com/projects/K8S/issues/?filter=allopenissues) to report any bugs and issues.

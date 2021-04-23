@@ -1,0 +1,16 @@
+# config file version
+apiVersion: 1
+
+# list of datasources that should be deleted from the database
+# deleteDatasources:
+  # - name: Loki
+
+# list of datasources to insert/update
+# https://grafana.com/docs/grafana/latest/datasources/loki/#configure-the-data-source-with-provisioning
+datasources:
+- name: Loki
+  type: loki
+  access: proxy
+  url: http://loki:3100
+  jsonData:
+    maxLines: 1000

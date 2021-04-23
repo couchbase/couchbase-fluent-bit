@@ -1,0 +1,11 @@
+version: "3"
+services:
+    logging:
+        image: ${FLUENT_BIT_IMAGE}
+        ports:
+            - "2020:2020"
+        environment:
+            - COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs
+        volumes:
+            - ./logs:/opt/couchbase/var/lib/couchbase/logs/:ro
+            - ./fluent-bit.conf:/fluent-bit/config/fluent-bit.conf:ro

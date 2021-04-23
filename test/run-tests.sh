@@ -130,7 +130,7 @@ done
 # Now we run the golden diffs, i.e. compare actual to expected output
 if [[ $exitCode -eq 0 ]]; then
     # We only work with any logs we have .expected output for
-    for i in "${COUCHBASE_LOGS}"/*.log.expected; do
+    for i in "${COUCHBASE_LOGS}"/*.expected; do
         # Ignore invalid/non-files
         [[ ! -f "$i" ]] && continue
 
