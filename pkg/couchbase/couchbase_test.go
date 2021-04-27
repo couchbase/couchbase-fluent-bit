@@ -138,29 +138,6 @@ func TestProcessExisting(t *testing.T) {
 	}
 }
 
-func TestGetDirectory(t *testing.T) {
-	t.Parallel()
-
-	testKey := "TEST_GET_DEFAULT"
-	expected := "DEFAULT"
-
-	value := couchbase.GetDirectory(expected, testKey)
-	if value != expected {
-		t.Errorf("%q != %q", value, expected)
-	}
-
-	expected = "/Something/other/than/the/default////"
-	os.Setenv(testKey, expected)
-
-	value = couchbase.GetDirectory(expected, testKey)
-	if value == expected {
-		t.Errorf("%q == %q", value, expected)
-	}
-
-	if value != filepath.Clean(expected) {
-		t.Errorf("%q != %q", value, filepath.Clean(expected))
-	}
-}
 func TestCreateWatchers(t *testing.T) {
 	t.Parallel()
 

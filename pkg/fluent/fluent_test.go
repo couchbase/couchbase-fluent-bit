@@ -124,8 +124,10 @@ func TestFluentBitRestartOnConfigChange(t *testing.T) {
 				if err != nil {
 					t.Fatal(err, i)
 				}
-				defer dst.Close()
-				time.Sleep(time.Second)
+				// Make sure we close it straight away to flush
+				_ = dst.Close()
+				// Allow us time to restart Fluent Bit
+				time.Sleep(2 * time.Second)
 				// Even though it is restarted a few times, it is only once for each change
 				if config.GetRestartCount() != 1 {
 					t.Errorf("Invalid restart count: %d != %d", config.GetRestartCount(), 1)

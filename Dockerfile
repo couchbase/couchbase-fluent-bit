@@ -10,7 +10,7 @@ COPY conf/ /fluent-bit/etc/
 # Set up output for rebalance pre-processing - can be overridden, e.g. for testing
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
 # Default location for logs but also set by the operator
-ENV COUCHBASE_LOGS /opt/couchbase/var/couchbase/logs
+ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs/
 
 # To support mounting a configmap or secret but mixing with existing files we use a separate volume
 # This way we can keep using the parsers defined without having to re-define them.

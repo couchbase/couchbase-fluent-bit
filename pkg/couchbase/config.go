@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/couchbase/fluent-bit/pkg/common"
 )
 
 type WatcherConfig struct {
@@ -18,15 +20,15 @@ type WatcherConfig struct {
 
 func NewWatcherConfigFromDefaults() *WatcherConfig {
 	// Kubesphere configuration
-	fluentBitConfigDir := GetDirectory("/fluent-bit/config", "COUCHBASE_LOGS_DYNAMIC_CONFIG")
-	fluentBitConfigFilePath := GetDirectory(filepath.Join(fluentBitConfigDir, "fluent-bit.conf"), "COUCHBASE_LOGS_CONFIG_FILE")
-	fluentBitBinaryPath := GetDirectory("/fluent-bit/bin/fluent-bit", "COUCHBASE_LOGS_BINARY")
+	fluentBitConfigDir := common.GetDynamicConfigDir()
+	fluentBitConfigFilePath := common.GetConfigFile()
+	fluentBitBinaryPath := common.GetBinaryPath()
 	// The logs directory is required to exist
-	couchbaseLogDir := GetDirectory("/opt/couchbase/var/couchbase/logs", "COUCHBASE_LOGS")
+	couchbaseLogDir := common.GetLogsDir()
 	// The actual rebalance directory may not exist yet
-	couchbaseWatchDir := filepath.Join(couchbaseLogDir, "rebalance")
+	couchbaseWatchDir := common.GetRebalanceReportDir()
 	// We need write access to this directory
-	rebalanceOutputDir := GetDirectory("/tmp/rebalance-logs", "COUCHBASE_LOGS_REBALANCE_TEMPDIR")
+	rebalanceOutputDir := common.GetRebalanceOutputDir()
 
 	config := WatcherConfig{
 		fluentBitConfigDir:      fluentBitConfigDir,

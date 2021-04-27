@@ -8,6 +8,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/couchbase/fluent-bit/pkg/common"
 	"github.com/couchbase/fluent-bit/pkg/couchbase"
 	"github.com/couchbase/fluent-bit/pkg/logging"
 )
@@ -20,7 +21,8 @@ func main() {
 	ignoreExisting := flag.Bool("ignoreExisting", true, "Ignore any existing rebalance reports, if false will process then exit")
 	flag.Parse()
 
-	log.Infow("Starting up CB-FB processor", "ignoreExisting", *ignoreExisting)
+	common.LoadEnvironment()
+	log.Infow("Starting up Couchbase log processor", "ignoreExisting", *ignoreExisting, "environment", os.Environ())
 
 	config := couchbase.NewWatcherConfigFromDefaults()
 	if err := config.CreateRebalanceDir(); err != nil {

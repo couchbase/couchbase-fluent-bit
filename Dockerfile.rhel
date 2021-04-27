@@ -68,7 +68,7 @@ ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
 COPY conf/ /fluent-bit/etc/
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
-ENV COUCHBASE_LOGS /opt/couchbase/var/couchbase/logs
+ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs/
 VOLUME /fluent-bit/config
 ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
@@ -88,6 +88,7 @@ COPY test/ /fluent-bit/test/
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
+
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 # We need a build to complete without targets that produces the official image to deploy

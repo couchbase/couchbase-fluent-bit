@@ -39,6 +39,7 @@ lint:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./cmd/... ./pkg/...
 
 test-unit:
+	go clean -testcache
 	go test -timeout 30s -v ./pkg/...
 
 # NOTE: This target is only for local development. While we use this Dockerfile

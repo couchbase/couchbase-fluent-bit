@@ -22,6 +22,7 @@ require (
 	github.com/golangci/prealloc v0.0.0-20180630174525-215b22d4de21 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/heroku/terrier v0.0.0-20200623122804-c3da2d1e1468 // indirect
+	github.com/joho/godotenv v1.3.0 // indirect
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/magiconair/properties v1.8.5 // indirect

@@ -66,6 +66,8 @@ func Start(fb *Config) {
 
 	// #nosec G204
 	fb.cmd = exec.Command(fb.binPath, "-c", fb.cfgPath)
+	// Pick up any customised environment loaded in as well
+	fb.cmd.Env = os.Environ()
 	fb.cmd.Stdout = os.Stdout
 	fb.cmd.Stderr = os.Stderr
 

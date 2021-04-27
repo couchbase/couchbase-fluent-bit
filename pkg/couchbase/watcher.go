@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -270,16 +269,6 @@ func AddCouchbaseWatcher(g *run.Group, config WatcherConfig) error {
 	)
 
 	return nil
-}
-
-func GetDirectory(defaultValue, environmentVariable string) string {
-	directoryName := os.Getenv(environmentVariable)
-	if directoryName == "" {
-		log.Infow("No environment variable so defaulting", "environmentVariable", environmentVariable, "defaultValue", defaultValue)
-		directoryName = defaultValue
-	}
-
-	return path.Clean(directoryName)
 }
 
 func CreateWatchers(cw WatcherConfig) (*run.Group, error) {

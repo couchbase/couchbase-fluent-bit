@@ -10,7 +10,9 @@ The Couchbase Fluent Bit image is an image based on the official [Fluent Bit](ht
 This image is intended to be used as a sidecar with a Couchbase Autonomous Operator deployment to automatically stream various couchbase logs.
 The log streaming can be dynmically configured per namespace/Couchbase cluster via a standard Kubernetes secret which is mounted then as the configuration directory.
 
-The image could also be used with an on-premise deployment to ship local logs in the same fashion although this is not currently officially supported.
+At this time, the image is only officially tested on Kubernetes in conjunction with the Couchbase Autonomous Operator.
+However, nothing has been added to the image that explicitly prevents it from being run in non-Kubernetes environments.
+Fluent Bit itself supports various deployment options so refer to its documentation for details.
 
 To help provide the capability in this image we make use of other OSS:
 * https://github.com/kubesphere/fluent-bit
@@ -188,7 +190,7 @@ services:
 volumes:
     log-volume:
 ```
-The volume could be replaced with a bind mount for an on-premise Couchbase Server deployment - and the container could be run directly with a container runtime rather than docker-compose (as per Testing example below.)
+The volume could be replaced with a bind mount for an on-premise Couchbase Server deployment - and the container could be run directly with a container runtime rather than docker-compose (as per Testing example below.) Couchbase Server will need configuration when it starts up above - it currently does not support a declarative model to auto-provision the containers on startup.
 
 Note that this image copes with multi-line input logs but the default output to standard output will still be over multiple lines for these same messages.
 This means if you are collecting this information with a Daemonset (e.g. another Fluent Bit or PromTail) reading the container logs (from standard output) then you will need to capture multi-line output.
@@ -230,8 +232,9 @@ This can be run locally or as an image against the files to check, when run as a
 
 For the Red Hat variant we make best effort to verify Fluent Bit is working using its unit tests however the only supported usage is of the `tail` input plugin to `stdout` output plugin pipeline used in the default configuration for the Couchbase Autonomous Operator.
 
-## Reporting Bugs and Issues
-Please use our official [JIRA board](https://issues.couchbase.com/projects/K8S/issues/?filter=allopenissues) to report any bugs and issues.
+## Feedback
+Please use our official [JIRA board](https://issues.couchbase.com/projects/K8S/issues/?filter=allopenissues) to report any bugs and issues with the `logging` component.
+We also encourage you to use the [Couchbase Forums](https://forums.couchbase.com/c/couchbase-server/Kubernetes) for posting any questions or feedback that you might have.
 
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
