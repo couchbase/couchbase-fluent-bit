@@ -18,14 +18,18 @@ pipeline {
         numToKeepStr: '50',
       )
     )
+
+    // We only have a single cluster for now, control concurrency with other runs of this
+    // job, or another job with a reservation on a global lockable resource.
+    lock resource: 'gke-cluster-couchbase-operator'
   }
 
   parameters {
-    string(name: 'refspec', defaultValue: 'refs/heads/master', description: 'Gerrit ref spec of your source tree')
+    string(name: 'refspec-fluentbit', defaultValue: 'refs/heads/main', description: 'Gerrit ref spec of your source tree for fluent bit')
   }
 
   environment {
-    GOVERSION = '1.16.2'
+    GOVERSION = '1.16.3'
     GOROOT = "${env.WORKSPACE}/go"
     PATH = "${env.WORKSPACE}/go/bin:$PATH"
     DOCKER_CREDENTIALS = credentials('dockerhub-couchbaseqe')
@@ -37,7 +41,7 @@ pipeline {
       steps {
         // The build name must be unique, or the JUnit trend will crap out.
         buildName "#${BUILD_NUMBER} ${sh(script: 'git log --oneline --format=%B HEAD | head -n 1', returnStdout: true)}"
-        buildDescription "Patchset: ${params.refspec.split('/').last()}"
+        buildDescription "Patchset: ${params.refspec-fluentbit.split('/').last()}"
       }
     }
 
@@ -47,7 +51,7 @@ pipeline {
       }
     }
 
-    stage('Build & test') {
+    stage('Build & test fluent bit') {
       steps {
         sh 'make clean all'
       }

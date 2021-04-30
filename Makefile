@@ -25,6 +25,7 @@ image-artifacts: build
 	mkdir -p $(ARTIFACTS)/bin/linux
 	cp bin/linux/couchbase-watcher $(ARTIFACTS)/bin/linux
 	cp Dockerfile* LICENSE README.md $(ARTIFACTS)
+	cp non-root.passwd $(ARTIFACTS)
 	cp -rv conf licenses redaction test $(ARTIFACTS)
 
 # This target (and only this target) is invoked by the production build job.
@@ -37,6 +38,7 @@ dist: image-artifacts
 
 lint:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./cmd/... ./pkg/...
+	tools/shellcheck.sh
 
 test-unit:
 	go clean -testcache
@@ -89,6 +91,7 @@ container-rhel-checks: container-scan
 
 test: test-unit container container-rhel container-lint
 	docker run --rm ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
+	docker run --rm -u 1000 ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
 	docker run --rm ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}
 
 # This target pushes the containers to a public repository.

@@ -1,5 +1,6 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
 FROM fluent/fluent-bit:1.7.4 as production
+
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 # We need to layer on a binary to pre-process the rebalance reports and watch for config changes
@@ -32,12 +33,22 @@ FROM fluent/fluent-bit:1.7.4-debug as test
 COPY --from=production /fluent-bit/ /fluent-bit/
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
 COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
-# Add test cases
+# Add test cases (need write permissions as well for logs)
 COPY test/ /fluent-bit/test/
 
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
+
+# Use busybox so custom shell location, need to chmod for log output write access
+SHELL [ "/usr/local/bin/sh", "-c" ]
+RUN chmod 777 /fluent-bit/test/ && \
+    chmod 777 /fluent-bit/test/logs && \
+    chmod 777 /fluent-bit/etc/couchbase
+
+# Ensure we run as non-root by default
+COPY non-root.passwd /etc/passwd
+USER 8453
 
 # Wrap our test cases in a script that supports checking for errors and then using an exit code directly
 # https://github.com/fluent/fluent-bit/issues/3268
@@ -50,7 +61,13 @@ LABEL description="Couchbase Fluent Bit image with support for config reload, pr
 # Ensure we include any relevant docs
 COPY licenses/* /licenses/
 COPY README.md /help.1
+
 # Copying the base image to expose for the HTTP server if enabled
 EXPOSE 2020
+
+# Ensure we run as non-root by default
+COPY non-root.passwd /etc/passwd
+USER 8453
+
 # Entry point - run our custom binary
 CMD ["/fluent-bit/bin/couchbase-watcher"]

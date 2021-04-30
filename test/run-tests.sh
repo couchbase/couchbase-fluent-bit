@@ -65,16 +65,18 @@ if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
         done
 
         # Be careful not to mount extra ones in
-        if [[ $(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -maxdepth 1 -print0 | wc -l) -ne 10 ]]; then
+        if [[ $(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -maxdepth 1 -print | wc -l) -ne 11 ]]; then
             echo "FAILED: Unable to create files/directory to test in ${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
+            ls -l "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
+            exitCode=1
         fi
     fi
 
     echo "Testing rebalance processing"
     # Run the watcher in the special mode to process existing and exit
     if /fluent-bit/bin/couchbase-watcher --ignoreExisting=false; then 
-        countOfInput=$(find "${COUCHBASE_LOGS}/rebalance" -type f -name "rebalance_report_*.json" -print0 |wc -l)
-        countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -type f -name "rebalance-processed-*.json" -print0 |wc -l)
+        countOfInput=$(find "${COUCHBASE_LOGS}/rebalance" -type f -name "rebalance_report_*.json" -print |wc -l)
+        countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -type f -name "rebalance-processed-*.json" -print |wc -l)
 
         if [[ $countOfInput -eq $countOfOutput ]]; then
             echo "PASSED: Processed all rebalance reports"
