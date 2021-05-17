@@ -1,5 +1,5 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
-FROM fluent/fluent-bit:1.7.4 as production
+FROM fluent/fluent-bit:1.7.7 as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -28,7 +28,7 @@ COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-FROM fluent/fluent-bit:1.7.4-debug as test
+FROM fluent/fluent-bit:1.7.7-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
@@ -50,6 +50,9 @@ RUN chmod 777 /fluent-bit/test/ && \
 # Ensure we run as non-root by default
 COPY non-root.passwd /etc/passwd
 USER 8453
+
+# Copying the base image to expose for the HTTP server if enabled
+EXPOSE 2020
 
 # Wrap our test cases in a script that supports checking for errors and then using an exit code directly
 # https://github.com/fluent/fluent-bit/issues/3268

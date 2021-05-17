@@ -27,6 +27,7 @@ import (
 	"github.com/couchbase/fluent-bit/pkg/common"
 	"github.com/couchbase/fluent-bit/pkg/couchbase"
 	"github.com/couchbase/fluent-bit/pkg/logging"
+	"github.com/couchbase/fluent-bit/pkg/version"
 )
 
 var (
@@ -38,7 +39,14 @@ func main() {
 	flag.Parse()
 
 	common.LoadEnvironment()
-	log.Infow("Starting up Couchbase log processor", "ignoreExisting", *ignoreExisting, "environment", os.Environ())
+
+	// Log the version, branch and revision so we know
+	// * Version feature set
+	// * Whether this is an official or development branch
+	// * The exact commit defects are raised against
+	log.Infow("Starting up Couchbase log processor",
+		"version", version.WithBuildNumber(), "revision", version.GitRevision(),
+		"ignoreExisting", *ignoreExisting, "environment", os.Environ())
 
 	config := couchbase.NewWatcherConfigFromDefaults()
 	if err := config.CreateRebalanceDir(); err != nil {

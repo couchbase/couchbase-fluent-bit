@@ -1,6 +1,6 @@
 SOURCE = $(shell find . -name *.go -type f)
-bldNum = $(if $(BLD_NUM),$(BLD_NUM),9999)
-version = $(if $(VERSION),$(VERSION),1.0.0)
+bldNum = $(if $(BLD_NUM),$(BLD_NUM),999)
+version = $(if $(VERSION),$(VERSION),1.0.4)
 productVersion = $(version)-$(bldNum)
 ARTIFACTS = build/artifacts/
 
@@ -8,14 +8,29 @@ ARTIFACTS = build/artifacts/
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
-.PHONY: all build lint test-unit container container-rhel container-public container-lint container-scan container-rhel-checks dist test test-dist container-clean clean
+# What exact revision is this?
+GIT_REVISION := $(shell git rev-parse HEAD)
+
+# Set this to, for example beta1, for a beta release.
+# This will affect the "-v" version strings and docker images.
+# This is analogous to revisions in DEB and RPM archives.
+revision = $(if $(REVISION),$(REVISION),)
+
+# These are propagated into each binary so we can tell for sure the exact build
+# that a binary came from.
+LDFLAGS = "-s -w -X github.com/couchbase/fluent-bit/pkg/version.version=$(version) -X github.com/couchbase/fluent-bit/pkg/version.revision=$(revision) -X github.com/couchbase/fluent-bit/pkg/version.buildNumber=$(bldNum) -X github.com/couchbase/fluent-bit/pkg/version.gitRevision=$(GIT_REVISION)"
+
+# Hardcode version values for testing
+TEST_LDFLAGS = "-X github.com/couchbase/fluent-bit/pkg/version.version=1 -X github.com/couchbase/fluent-bit/pkg/version.revision=2 -X github.com/couchbase/fluent-bit/pkg/version.buildNumber=3 -X github.com/couchbase/fluent-bit/pkg/version.gitRevision=456"
+
+.PHONY: all build lint test-unit container container-rhel container-public container-lint container-scan container-rhel-checks container-rhel-tests dist test perf-test test-dist container-clean clean
 
 all: clean build lint test-unit container container-rhel container-lint container-scan container-rhel-checks test dist test-dist
 
 build: $(SOURCE) go.mod
 	for platform in linux darwin ; do \
 	  echo "Building $$platform binary" ; \
-	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -ldflags="-s -w" -o bin/$$platform/couchbase-watcher ./cmd ; \
+	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher ./cmd ; \
 	done
 
 image-artifacts: build
@@ -40,7 +55,7 @@ lint:
 
 test-unit:
 	go clean -testcache
-	go test -timeout 30s -v ./pkg/...
+	go test -ldflags $(TEST_LDFLAGS) -timeout 30s -v ./pkg/...
 
 # NOTE: This target is only for local development. While we use this Dockerfile
 # (for now), the actual "docker build" command is located in the Jenkins job
@@ -90,10 +105,17 @@ container-rhel-checks: container-scan
 	docker save -o fluent-bit-rhel.tar ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 	go run github.com/heroku/terrier -cfg terrier.cfg.yml && rm -f fluent-bit-rhel.tar
 
+# Run the Fluent Bit unit tests (and all the others but these are disabled by default) in the RHEL container
+container-rhel-tests: container-rhel
+	docker run --rm -e RUN_FLUENT_BIT_TESTS=yes ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}
+
 test: test-unit container container-rhel container-lint
 	docker run --rm ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
 	docker run --rm -u 1000 ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
 	docker run --rm ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}
+
+perf-test: container
+	CONTAINER_UNDER_TEST=${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} tools/monitor-container.sh
 
 # This target pushes the containers to a public repository.
 # A typical one liner to deploy to the cloud would be:

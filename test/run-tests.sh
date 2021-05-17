@@ -81,6 +81,8 @@ if [[ ! -x "${COUCHBASE_LOGS_BINARY}" ]]; then
 fi
 
 if [[ "${RUN_FLUENT_BIT_TESTS}" == "yes" ]]; then
+    # Some of the tests need write permission
+    cd /fluent-bit/test || (echo "FAILED: Unable to change directory for unit tests" && exit 1)
     # Run any additional binaries found, i.e. RHEL fluent bit unit tests
     for TEST in /fluent-bit/test/bin/*; do
         if [[ -x "${TEST}" ]]; then
@@ -93,6 +95,10 @@ if [[ "${RUN_FLUENT_BIT_TESTS}" == "yes" ]]; then
             fi
         fi
     done
+    if [[ $exitCode -ne 0 ]]; then
+        echo "FAILED: Unit tests for fluent bit"
+        exit $exitCode
+    fi
 fi
 
 # Deal with any rebalance reports by invoking the watcher

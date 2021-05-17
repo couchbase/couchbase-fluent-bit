@@ -3,8 +3,11 @@
 # Test output (if bind-mounted)
 test/logs/*.actual
 test/logs/rebalance-logs/
+output.log
 # Build output
 build/
 dist/
 bin/
 test-dist/
+# Tools output
+tools/*.csv*
