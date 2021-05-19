@@ -39,6 +39,7 @@ dist: image-artifacts
 lint:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./cmd/... ./pkg/...
 	tools/shellcheck.sh
+	tools/licence-lint.sh
 
 test-unit:
 	go clean -testcache
