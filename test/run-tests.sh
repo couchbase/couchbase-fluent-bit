@@ -32,15 +32,25 @@ set -uo pipefail
 # Simple storage of any failures
 exitCode=0
 
-# Time in seconds before we end a test case.
+# Time in seconds before we end a test case verifying the log output.
 # Required as exit_on_eof causes other problems: https://github.com/fluent/fluent-bit/issues/3274
 # Tweak as required for running a complete test (depends on size of log, speed of host, etc.)
-TEST_TIMEOUT=${TEST_TIMEOUT:-10}
+EXPECT_TEST_TIMEOUT=${EXPECT_TEST_TIMEOUT:-10}
+
+# Do not run all unit tests by default, assumption is to do this on version change only.
+# They are not 100% reliable so seem to have failures when run all together and/or timing issues.
+# Set to yes in order to run them automatically.
+RUN_FLUENT_BIT_TESTS=${RUN_FLUENT_BIT_TESTS:-no}
+
+# Time in seconds before we end a fluent bit test case, mainly to prevent build stalling.
+FLUENT_BIT_TEST_TIMEOUT=${FLUENT_BIT_TEST_TIMEOUT:-600}
 
 # Document settings and echo them together so we can see them in output
+echo "COUCHBASE_LOGS_BINARY set to ${COUCHBASE_LOGS_BINARY} - using as fluent bit binary"
 echo "COUCHBASE_LOGS set to ${COUCHBASE_LOGS} - put all log files here and expected output"
 echo "COUCHBASE_LOGS_REBALANCE_TEMPDIR set to ${COUCHBASE_LOGS_REBALANCE_TEMPDIR} - temporary rebalance report output directory"
-echo "TEST_TIMEOUT set to ${TEST_TIMEOUT} - the time taken to run each CI test before we kill it"
+echo "EXPECT_TEST_TIMEOUT set to ${EXPECT_TEST_TIMEOUT} - the time taken to run each CI test before we kill it"
+echo "FLUENT_BIT_TEST_TIMEOUT set to ${FLUENT_BIT_TEST_TIMEOUT} - the time taken to run each Fluent Bit test before we kill it"
 
 # Helper method to run the Fluent Bit expect tests and check for failures.
 function runExpectTest() {
@@ -49,21 +59,41 @@ function runExpectTest() {
 
     # We have to timeout the test case as ending on EOF pauses/breaks the rest of the pipeline once it exits
     # https://github.com/fluent/fluent-bit/issues/3274
-    # We need to use a KILL signal as that's the only one `timeout` supports on Busybox that actually works, 
+    # We need to use a KILL signal as that's the only one `timeout` supports on Busybox that actually works,
     # however this may generate some extra messages on other targets.
-    timeout -s 9 "${TEST_TIMEOUT}" /fluent-bit/bin/fluent-bit --config "$testConfig" > "$testLog" 2>&1
-    
+    timeout -s 9 "${EXPECT_TEST_TIMEOUT}" "${COUCHBASE_LOGS_BINARY}" --config "$testConfig" > "$testLog" 2>&1
+
     # Currently it always exits with 0 so we have to check for a specific error message.
     # https://github.com/fluent/fluent-bit/issues/3268
-    if grep -iq "exception on rule" "$testLog" ; then 
+    if grep -iq "exception on rule" "$testLog" ; then
         cat "$testLog"
         cat "$testConfig"
-        echo "FAILED: $testLog" 
+        echo "FAILED: $testLog"
         exitCode=1
     else
         echo "PASSED: $testLog"
     fi
 }
+
+if [[ ! -x "${COUCHBASE_LOGS_BINARY}" ]]; then
+    echo "Unable to execute ${COUCHBASE_LOGS_BINARY}"
+    exit 1
+fi
+
+if [[ "${RUN_FLUENT_BIT_TESTS}" == "yes" ]]; then
+    # Run any additional binaries found, i.e. RHEL fluent bit unit tests
+    for TEST in /fluent-bit/test/bin/*; do
+        if [[ -x "${TEST}" ]]; then
+            echo "Running ${TEST}"
+            if  timeout -s 9 "${FLUENT_BIT_TEST_TIMEOUT}" "${TEST}" ; then
+                echo "PASSED: $TEST"
+            else
+                echo "FAILED: $TEST"
+                exitCode=1
+            fi
+        fi
+    done
+fi
 
 # Deal with any rebalance reports by invoking the watcher
 if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
@@ -72,7 +102,7 @@ if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
         echo "Creating dummy files to test rotation of old files in rebalance processing"
         # Add a sub-directory to test that as well
         mkdir -p "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"/1
-        #touch "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"/{2..10}.test
+        # Does not work for busybox: `touch "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"/{2..10}.test`
         for i in $(seq 2 10); do
             touch "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}/${i}.test"
             sleep 1 # Give us a slight modification time...
@@ -88,14 +118,14 @@ if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
 
     echo "Testing rebalance processing"
     # Run the watcher in the special mode to process existing and exit
-    if /fluent-bit/bin/couchbase-watcher --ignoreExisting=false; then 
+    if /fluent-bit/bin/couchbase-watcher --ignoreExisting=false; then
         countOfInput=$(find "${COUCHBASE_LOGS}/rebalance" -type f -name "rebalance_report_*.json" -print |wc -l)
         countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -type f -name "rebalance-processed-*.json" -print |wc -l)
 
         if [[ $countOfInput -eq $countOfOutput ]]; then
             echo "PASSED: Processed all rebalance reports"
             ls -l "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
-        else 
+        else
             echo "FAILED: Unable to process rebalance reports, $countOfInput != $countOfOutput"
             exitCode=1
         fi
@@ -144,39 +174,35 @@ for i in /fluent-bit/test/test-*.conf; do
 done
 
 # Now we run the golden diffs, i.e. compare actual to expected output
-if [[ $exitCode -eq 0 ]]; then
-    # We only work with any logs we have .expected output for
-    for i in "${COUCHBASE_LOGS}"/*.expected; do
-        # Ignore invalid/non-files
-        [[ ! -f "$i" ]] && continue
+# We only work with any logs we have .expected output for
+for i in "${COUCHBASE_LOGS}"/*.expected; do
+    # Ignore invalid/non-files
+    [[ ! -f "$i" ]] && continue
 
-        expected=$i
-        actual=${i%.expected}.actual
-        if [[ ! -f "${actual}" ]]; then
-            echo "FAILED: missing actual output $actual"
-            exitCode=1
-            continue
-        fi
+    expected=$i
+    actual=${i%.expected}.actual
+    if [[ ! -f "${actual}" ]]; then
+        echo "FAILED: missing actual output $actual"
+        exitCode=1
+        continue
+    fi
 
-        # The FTS and Eventing logs have issues with timestamp parsing so we ignore those
-        # Unfortunately Busybox is limited with tests/regexes so being very explicit here
-        if [[ "$i" == "${COUCHBASE_LOGS}/fts.log.expected" || "$i" == "${COUCHBASE_LOGS}/eventing.log.expected" ]]; then
-            echo "Ignoring timestamp deltas in $i"
-            # Replace timestamps, e.g.: .actual: [1616875582.481815658, {"filename" --> .actual: [__IGNORED__, {"filename"
-            sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$actual"
-            sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$expected"
-        fi
+    # The FTS and Eventing logs have issues with timestamp parsing so we ignore those
+    # Unfortunately Busybox is limited with tests/regexes so being very explicit here
+    if [[ "$i" == "${COUCHBASE_LOGS}/fts.log.expected" || "$i" == "${COUCHBASE_LOGS}/eventing.log.expected" ]]; then
+        echo "Ignoring timestamp deltas in $i"
+        # Replace timestamps, e.g.: .actual: [1616875582.481815658, {"filename" --> .actual: [__IGNORED__, {"filename"
+        sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$actual"
+        sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$expected"
+    fi
 
-        if diff -a -q "${actual}" "${expected}"; then
-            echo "PASSED: No differences found in $actual and $expected"
-        else
-            echo "FAILED: Differences found between $actual and $expected"
-            diff -a "${actual}" "${expected}"
-            exitCode=1
-        fi
-    done
-else 
-    echo "SKIPPED: Golden diffs as previous failures"
-fi
+    if diff -a -q "${actual}" "${expected}"; then
+        echo "PASSED: No differences found in $actual and $expected"
+    else
+        echo "FAILED: Differences found between $actual and $expected"
+        diff -a "${actual}" "${expected}"
+        exitCode=1
+    fi
+done
 
 exit $exitCode

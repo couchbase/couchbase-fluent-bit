@@ -118,7 +118,7 @@ func TestFluentBitRestartOnConfigChange(t *testing.T) {
 	testFile := filepath.Join(dir, "test.restarts")
 
 	// Use a custom binary, i.e. sleep, for testing
-	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 10000", dir)
+	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 20000", dir)
 
 	var g run.Group
 	if err := fluent.AddDynamicConfigWatcher(&g, config); err != nil {
@@ -129,34 +129,43 @@ func TestFluentBitRestartOnConfigChange(t *testing.T) {
 		t.Error("Test file already exists at the start")
 	}
 
-	if config.GetRestartCount() != 0 {
-		t.Errorf("Invalid restart count at the start: %d", config.GetRestartCount())
+	if config.GetStartCount() != 0 {
+		t.Errorf("Invalid restart count at the start: %d", config.GetStartCount())
 	}
 
-	{
-		g.Add(func() error {
-			for i := 0; i < 5; i++ {
-				dst, err := os.Create(filepath.Join(dir, filepath.Base("test_file_"+strconv.Itoa(i))))
-				if err != nil {
-					t.Fatal(err, i)
-				}
-				// Make sure we close it straight away to flush
-				_ = dst.Close()
-				// Allow us time to restart Fluent Bit
-				time.Sleep(2 * time.Second)
-				// Even though it is restarted a few times, it is only once for each change
-				if config.GetRestartCount() != 1 {
-					t.Errorf("Invalid restart count: %d != %d", config.GetRestartCount(), 1)
-				}
+	// We add a file to the config directory and it should restart the command
+	g.Add(func() error {
+		for i := 1; i <= 5; i++ {
+			// Allow for command to start before we change anything
+			time.Sleep(time.Second)
+
+			if config.GetStartCount() != i {
+				t.Errorf("Invalid restart count before creating file: %d != %d", config.GetStartCount(), i)
 			}
 
-			return nil
-		}, func(err error) {
+			// We need to make sure we are watching for the file before we create it
+			dst, err := os.Create(filepath.Join(dir, filepath.Base("test_file_"+strconv.Itoa(i))))
 			if err != nil {
-				t.Errorf("Error during test: %v", err)
+				t.Fatal(err, i)
 			}
-		})
-	}
+			// Make sure we close it straight away to flush
+			_ = dst.Close()
+
+			// Allow us time to restart
+			time.Sleep(time.Second)
+
+			// Check we have incremented the start count
+			if config.GetStartCount() != i+1 {
+				t.Errorf("Invalid restart count: %d != %d", config.GetStartCount(), i+1)
+			}
+		}
+
+		return nil
+	}, func(err error) {
+		if err != nil {
+			t.Errorf("Error during test: %v", err)
+		}
+	})
 
 	if err := g.Run(); err != nil {
 		t.Errorf("Error during test: %v", err)

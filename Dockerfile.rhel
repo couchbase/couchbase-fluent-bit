@@ -41,7 +41,6 @@ RUN cmake \
       -DFLB_IN_PROC=Off \
       ../ && \
       make && \
-      make ${MAKE_ADDITIONAL_TARGETS} && \
       install bin/fluent-bit /fluent-bit/bin/
 
 # Configuration files
@@ -52,10 +51,6 @@ LABEL description="Couchbase Fluent Bit image with support for config reload, pr
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.
 RUN microdnf update && microdnf install -y openssl libpq systemd && microdnf clean all
-
-# Meet certification requirements - needs matching changes in operator to mount logs with appropriate permissions plus server log creation too
-# RUN groupadd -r fluentbit && useradd --no-log-init -r -g fluentbit fluentbit
-# USER fluentbit
 
 # Ensure we add licensing and help information for certification requirements
 COPY licenses/* /licenses/
@@ -76,23 +71,43 @@ ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
+# Try to hide some of the RHEL wastage
 FROM production as test
 RUN microdnf update && microdnf install -y findutils && microdnf clean all
 
-# Add unit tests from Fluent Bit as well just in case we want to re-run
+# Add unit tests from Fluent Bit so we can run
 COPY --from=builder /tmp/src/build/bin/flb-* /fluent-bit/test/bin/
+# We need test config & other data
+COPY --from=builder /tmp/src/tests/ /fluent-bit/test/support/
+# Hardcoded location during build process by CMake with no simple override
+RUN mkdir -p /tmp/src && ln -s /fluent-bit/test/support /tmp/src/tests
 
-# Add test cases
+# Add our test cases
 COPY test/ /fluent-bit/test/
+
+ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
 
+# Need to chmod for log & config output write access
+RUN chmod 777 /fluent-bit/test/ && \
+    chmod 777 /fluent-bit/test/logs && \
+    chmod 777 /fluent-bit/etc/couchbase
+
+RUN useradd -m -s /bin/false couchbase
+USER couchbase
+
+EXPOSE 2020
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 # We need a build to complete without targets that produces the official image to deploy
-FROM production 
+FROM production
+
+RUN useradd -m -s /bin/false couchbase
+USER couchbase
+
 EXPOSE 2020
 CMD ["/fluent-bit/bin/couchbase-watcher"]
 

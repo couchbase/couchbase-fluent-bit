@@ -31,6 +31,7 @@ var (
 )
 
 const (
+	// DynamicConfigEnvVar should only be used for testing.
 	DynamicConfigEnvVar      = "COUCHBASE_LOGS_DYNAMIC_CONFIG"
 	dynamicConfigDefault     = "/fluent-bit/config"
 	configFileEnvVar         = "COUCHBASE_LOGS_CONFIG_FILE"
@@ -41,8 +42,9 @@ const (
 	logsLocationDefault      = "/opt/couchbase/var/lib/couchbase/logs/"
 	rebalanceLocationEnvVar  = "COUCHBASE_LOGS_REBALANCE_TEMPDIR"
 	rebalanceLocationDefault = "/tmp/rebalance-logs"
-	KubernetesConfigEnvVar   = "COUCHBASE_K8S_CONFIG_DIR"
-	kubernetesConfigDefault  = "/etc/podinfo"
+	// KubernetesConfigEnvVar should only be used for testing.
+	KubernetesConfigEnvVar  = "COUCHBASE_K8S_CONFIG_DIR"
+	kubernetesConfigDefault = "/etc/podinfo"
 )
 
 func GetDynamicConfigDir() string {
@@ -109,7 +111,7 @@ func GetDirectory(defaultValue, environmentVariable string) string {
 	return path.Clean(directoryName)
 }
 
-// Inspired by https://github.com/jimmidyson/configmap-reload
 func IsValidEvent(event fsnotify.Event) bool {
+	// Inspired by https://github.com/jimmidyson/configmap-reload
 	return event.Op&fsnotify.Create == fsnotify.Create
 }

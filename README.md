@@ -230,7 +230,7 @@ The `tests/run-tests.sh` script will then iterate over all expected output to co
 To help with verifying new output, a simple NodeJS tool is provided in `tools/log-verifier`.
 This can be run locally or as an image against the files to check, when run as an image the file will need mounting into the container and passing as an argument.
 
-For the Red Hat variant we make best effort to verify Fluent Bit is working using its unit tests however the only supported usage is of the `tail` input plugin to `stdout` output plugin pipeline used in the default configuration for the Couchbase Autonomous Operator.
+For the Red Hat variant we make best effort to verify Fluent Bit however the only supported usage is of the `tail` input plugin to `stdout` output plugin pipeline used in the default configuration for the Couchbase Autonomous Operator. The Red Hat test container includes the unit tests which can be run manually as required to verify changes.
 
 ## Feedback
 Please use our official [JIRA board](https://issues.couchbase.com/projects/K8S/issues/?filter=allopenissues) to report any bugs and issues with the `logging` component.

@@ -35,9 +35,9 @@ var (
 )
 
 const (
-	MaxDelayTime  = time.Minute * 5
-	ResetTime     = time.Minute * 10
-	BackoffFactor = 2
+	maxDelayTime  = time.Minute * 5
+	resetTime     = time.Minute * 10
+	backoffFactor = 2
 )
 
 type Config struct {
@@ -46,6 +46,8 @@ type Config struct {
 	restartTimes               int
 	timer                      *time.Timer
 	binPath, cfgPath, watchDir string
+	totalStarts                int
+	cleanStop                  bool
 }
 
 func NewFluentBitConfig(binary, config, watchDir string) *Config {
@@ -57,13 +59,18 @@ func NewFluentBitConfig(binary, config, watchDir string) *Config {
 		binPath:      binary,
 		cfgPath:      config,
 		watchDir:     watchDir,
+		totalStarts:  0,
+		cleanStop:    false,
 	}
 
 	return &fb
 }
 
-func (fb *Config) GetRestartCount() int {
-	return fb.restartTimes
+func (fb *Config) GetStartCount() int {
+	fb.mutex.Lock()
+	defer fb.mutex.Unlock()
+
+	return fb.totalStarts
 }
 
 func Start(fb *Config) {
@@ -87,6 +94,9 @@ func Start(fb *Config) {
 	fb.cmd.Stdout = os.Stdout
 	fb.cmd.Stderr = os.Stderr
 
+	fb.totalStarts++
+	fb.cleanStop = false
+
 	if err := fb.cmd.Start(); err != nil {
 		log.Errorw("Start Fluent bit error", "error", err)
 
@@ -105,10 +115,13 @@ func Wait(fb *Config) {
 
 	startTime := time.Now()
 
-	log.Errorw("Fluent bit exited", "error", fb.cmd.Wait())
+	// If killed by us this is normal
+	if !fb.cleanStop {
+		log.Errorw("Fluent bit exited", "error", fb.cmd.Wait())
+	}
 	// Once the fluent bit has executed for 10 minutes without any problems,
 	// it should resets the restart backoff timer.
-	if time.Since(startTime) >= ResetTime {
+	if time.Since(startTime) >= resetTime {
 		fb.restartTimes = 0
 	}
 
@@ -122,9 +135,9 @@ func backoff(fb *Config) {
 		return
 	}
 
-	delayTime := time.Duration(math.Pow(BackoffFactor, float64(fb.restartTimes))) * time.Second
-	if delayTime >= MaxDelayTime {
-		delayTime = MaxDelayTime
+	delayTime := time.Duration(math.Pow(backoffFactor, float64(fb.restartTimes))) * time.Second
+	if delayTime >= maxDelayTime {
+		delayTime = maxDelayTime
 	}
 
 	fb.timer.Reset(delayTime)
@@ -149,6 +162,8 @@ func Stop(fb *Config) {
 	if fb.cmd == nil || fb.cmd.Process == nil {
 		return
 	}
+
+	fb.cleanStop = true
 
 	if err := fb.cmd.Process.Kill(); err != nil {
 		log.Errorw("Error killing Fluent Bit", "error", err)
@@ -190,6 +205,7 @@ func addFluentBitWatcher(g *run.Group, config *Config) {
 				Start(config)
 				// Wait for the fluent bit exit.
 				Wait(config)
+				log.Info("Detected exit of Fluent Bit so backoff")
 				// After the fluent bit exit, fluent bit watcher restarts it with an exponential
 				// back-off delay (1s, 2s, 4s, ...), that is capped at five minutes.
 				backoff(config)
@@ -231,9 +247,9 @@ func AddDynamicConfigWatcher(g *run.Group, fb *Config) error {
 
 					// After the config file changed, it should stop the fluent bit,
 					// and resets the restart backoff timer.
+					log.Info("Config file changed, stopping Fluent Bit")
 					Stop(fb)
 					resetTimer(fb)
-					log.Info("Config file changed, stop Fluent Bit")
 				case <-watcher.Errors:
 					log.Error("Dynamic config watcher stopped")
 

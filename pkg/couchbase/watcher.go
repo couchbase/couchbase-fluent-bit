@@ -36,16 +36,18 @@ import (
 )
 
 const (
+	// MaxCBFiles should only be used here and for testing.
 	MaxCBFiles = 5
 )
 
 var (
-	log                  = logging.Log
+	log = logging.Log
+	// ErrNoFluentBitConfig indicates when we fail to create a valid configuration.
 	ErrNoFluentBitConfig = errors.New("unable to create valid config object for fluent bit watching")
 )
 
-// Be nicer to use lumberjack or similar with a logger just to rotate and remove older files.
 func RemoveOldestFiles(rebalanceOutputDir string) error {
+	// Be nicer to use lumberjack or similar with a logger just to rotate and remove older files.
 	log.Debugw("Checking for older files to remove", "dir", rebalanceOutputDir)
 
 	files, err := ioutil.ReadDir(rebalanceOutputDir)

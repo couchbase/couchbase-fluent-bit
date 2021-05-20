@@ -21,6 +21,7 @@ linters:
   enable:
   - exportloopref
   disable:
+  - golint # replaced with revive in 1.40
   - interfacer
   - maligned
   - scopelint

@@ -29,6 +29,7 @@ COPY redaction/redaction.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
 FROM fluent/fluent-bit:1.7.4-debug as test
+ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial

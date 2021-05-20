@@ -20,7 +20,8 @@ import "go.uber.org/zap"
 
 var (
 	logger, _ = zap.NewProduction()
-	Log       = logger.Sugar().Named("couchbase-watcher")
+	// Log is the general logger for everything so is exported.
+	Log = logger.Sugar().Named("couchbase-watcher")
 )
 
 func GetLogger(name string) *zap.SugaredLogger {

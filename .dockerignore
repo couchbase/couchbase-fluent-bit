@@ -4,6 +4,7 @@
 !README.md
 !licenses/
 # Now include all the files we need for functionality
+!*-repo.rhel
 !bin/
 !conf/
 !redaction/
