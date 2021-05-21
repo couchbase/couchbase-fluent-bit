@@ -62,6 +62,7 @@ container-lint: build lint
 
 # RHEL base image fails Dive checks so just include for info and do not fail the build
 container-scan: container container-rhel
+	docker inspect ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} --format '{{.Config.User}}' | grep -q "8453"
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
 		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
@@ -76,9 +77,11 @@ container-scan: container container-rhel
 # Licenses provided
 # Layer count <40
 # Labels present
+# Numeric user id for couchbase
 # Goal here is to fail early with some simple checks
 container-rhel-checks: container-scan
 	docker run --rm ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} ls -l /licenses/
+	docker inspect ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} --format '{{.Config.User}}' | grep -q "8453"
 	test $(shell docker image history -q ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}| wc -l) -lt 40
 	for label in name vendor version release summary description ; do \
 		echo "Checking for label $$label" ; \

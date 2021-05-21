@@ -96,8 +96,8 @@ RUN chmod 777 /fluent-bit/test/ && \
     chmod 777 /fluent-bit/test/logs && \
     chmod 777 /fluent-bit/etc/couchbase
 
-RUN useradd -m -s /bin/false couchbase
-USER couchbase
+RUN useradd -u 8453 -m -s /bin/false couchbase
+USER 8453
 
 EXPOSE 2020
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
@@ -105,8 +105,8 @@ CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 # We need a build to complete without targets that produces the official image to deploy
 FROM production
 
-RUN useradd -m -s /bin/false couchbase
-USER couchbase
+RUN useradd -u 8453 -m -s /bin/false couchbase
+USER 8453
 
 EXPOSE 2020
 CMD ["/fluent-bit/bin/couchbase-watcher"]
