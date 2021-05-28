@@ -236,12 +236,43 @@ For the Red Hat variant we make best effort to verify Fluent Bit however the onl
 Please use our official [JIRA board](https://issues.couchbase.com/projects/K8S/issues/?filter=allopenissues) to report any bugs and issues with the `logging` component.
 We also encourage you to use the [Couchbase Forums](https://forums.couchbase.com/c/couchbase-server/Kubernetes) for posting any questions or feedback that you might have.
 
+## Support
+As indicated above, Couchbase only supports the use of this image when used with the Couchbase Autonomous Operator.
+Specificially, the default configuration provided by the operator and the ability to provide a custom configuration is supported.
+Best efforts are made to confirm that custom configurations will work with various plugins but any issues with the custom configuration, plugins or other components are outside of the supported scope.
+
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
 Updates will be pushed to the `main` branch often and then tagged once released as a new image version.
 Tags will not be moved after release, even just for a documentation update - this should trigger a new release or just be available as the latest version on `main`.
 
 The branching strategy is to minimise any branches other than `main` following the standard [GitHub flow model](https://guides.github.com/introduction/flow/).
+
+## Releases
+
+A quick summary of each release is given below to help understand the changes.
+For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
+
+* 1.0.3
+  * Disables auto-run of Fluent Bit unit tests during RHEL builds due to timing issue making them unreliable: https://github.com/fluent/fluent-bit/issues/3520
+  * Added run-as numeric USER to support security improvements.
+  * Copyright headers added to all source files along with CI checks to confirm it on every build.
+  * Resolved race condition in unit tests for restarting.
+* 1.0.2
+  * Major refactor to move from single `main.go` file to Go module across packages with unit tests as well for each sub-component.
+  * Update to Fluent Bit 1.7.4.
+  * Linting and other CI improvements.
+  * [Addition of extra common information](https://github.com/couchbase/couchbase-fluent-bit/blob/d474c83616f7444e3c627cb63d4fe021969073e6/conf/couchbase/filter-add-common-info.conf) as extra keys when run with the operator (pod and couchbase cluster information).
+  * [Additional filters](https://github.com/couchbase/couchbase-fluent-bit/blob/d474c83616f7444e3c627cb63d4fe021969073e6/conf/couchbase/filter-handle-levels.conf) from observability work to standardise log levels for easy use with Grafana, along with [example output configuration](https://github.com/couchbase/couchbase-fluent-bit/blob/d474c83616f7444e3c627cb63d4fe021969073e6/conf/couchbase/out-loki.conf) and supporting documentation.
+  * [Optional filter](https://github.com/couchbase/couchbase-fluent-bit/blob/d474c83616f7444e3c627cb63d4fe021969073e6/conf/couchbase/filter-common-problems.conf) to pick up examples of common problems, purely an initial example so not used by default.
+  * Reduced refresh interval to pick up new log files to 10 seconds - previously was 60 seconds.
+  * Enabled HTTP server by default to support metrics and healthchecks if required - on port 2020.
+  * Explicit non-root USER support.
+* 1.0.1
+  * Minor licensing updates to pass Red Hat certification checks.
+* 1.0.0
+  * Initial release containing the various watchers and parsers.
+  * Based on Fluent Bit 1.7.3
 
 ## License
 
