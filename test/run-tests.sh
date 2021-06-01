@@ -179,6 +179,13 @@ for i in /fluent-bit/test/test-*.conf; do
     runExpectTest "$i" "$testLog"
 done
 
+# Run special test case
+if sh /fluent-bit/test/run-file-transfer-tests.sh; then
+    echo "PASSED: file transfer example"
+else
+    echo "FAILED: file transfer example"
+fi
+
 # Now we run the golden diffs, i.e. compare actual to expected output
 # We only work with any logs we have .expected output for
 for i in "${COUCHBASE_LOGS}"/*.expected; do

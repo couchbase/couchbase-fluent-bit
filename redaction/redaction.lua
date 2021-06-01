@@ -30,7 +30,7 @@ Copyright 2021 Couchbase, Inc.
 --]]
 function cb_sub_message(tag, timestamp, record)
     -- Iterate over possible keys to redact (HTTP is the main cause of this)
-    keys = {'message', 'host', 'user', 'method', 'path', 'code', 'size', 'client'}
+    keys = {'log','message', 'host', 'user', 'method', 'path', 'code', 'size', 'client'}
     changed = false
     for i, current_key in ipairs(keys) do
         -- Overwrite original key with redacted version
@@ -48,11 +48,11 @@ function cb_sub_message(tag, timestamp, record)
             sha1_redacted = string.gsub(lowered, "<ud>(.-)</ud>", cb_hash_string )
             record[current_key] = sha1_redacted
             changed = true
-        end 
+        end
     end
 
     -- Indicate whether we updated it or not
-    if changed then 
+    if changed then
         return 2, 0, record
     end
     return 0, 0, record
@@ -78,7 +78,7 @@ function cb_hash_string(input)
         local salt = cb_read_file_contents( "/fluent-bit/config/redaction.salt" )
         -- Now hash everything with the salt
         hash_output = sha1.sha1(salt .. input)
-        return "<ud>" .. hash_output .. "</ud>" 
+        return "<ud>" .. hash_output .. "</ud>"
     end
     return input
 end

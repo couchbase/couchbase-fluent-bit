@@ -1,0 +1,15 @@
+# This should be redacted:
+{ "message": "Cats are <ud>00b335216f27c1e7d35149b5bbfe19d4eb2d6af1</ud> than dogs, and <ud>888f807d45ff6ce47240c7ed4e884a6f9dc7b4fb</ud>" }
+{ "message": "Cats are <ud>00b335216f27c1e7d35149b5bbfe19d4eb2d6af1</ud> than dogs, and <ud>888f807d45ff6ce47240c7ed4e884a6f9dc7b4fb</ud>" }
+{ "message": "Cats are <ud>00b335216f27c1e7d35149b5bbfe19d4eb2d6af1</ud> than dogs, and <ud>888f807d45ff6ce47240c7ed4e884a6f9dc7b4fb</ud>" }
+# The rest should be as-is:
+2021-03-09T17:32:25.520+00:00 DEBU CBAS.util.MXHelper [main] ignoring exception calling RuntimeMXBean.getBootClassPath; returning null
+java.lang.UnsupportedOperationException: Boot class path mechanism is not supported
+	at sun.management.RuntimeImpl.getBootClassPath(Unknown Source) ~[?:?]
+	at org.apache.hyracks.util.MXHelper.getBootClassPath(MXHelper.java:111) [hyracks-util.jar:6.6.0-7909]
+	at org.apache.hyracks.control.common.controllers.NodeRegistration.<init>(NodeRegistration.java:110) [hyracks-control-common.jar:6.6.0-7909]
+	at org.apache.hyracks.control.nc.NodeControllerService.initNodeControllerState(NodeControllerService.java:334) [hyracks-control-nc.jar:6.6.0-7909]
+	at org.apache.hyracks.control.nc.NodeControllerService.start(NodeControllerService.java:299) [hyracks-control-nc.jar:6.6.0-7909]
+	at com.couchbase.analytics.control.AnalyticsDriver.startService(AnalyticsDriver.java:128) [cbas-server.jar:6.6.0-7909]
+	at com.couchbase.analytics.control.AnalyticsDriver.main(AnalyticsDriver.java:99) [cbas-server.jar:6.6.0-7909]
+2021-03-09T17:32:25.595+00:00 DEBU CBAS.work.WorkQueue [Worker:ClusterController] Executing: RegisterNode
