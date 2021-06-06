@@ -253,6 +253,14 @@ The branching strategy is to minimise any branches other than `main` following t
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
+* main - in progress for next release
+  * Switch to using `record_modifier` for [common info](conf/couchbase/filter-add-common-info.conf) so missing variables do not trigger an exit, just an error.
+  * Removed Fluent Bit tests from running on every RHEL build: [issue](https://github.com/fluent/fluent-bit/issues/3520) with reliability so only run manually now on version change.
+  * Git version information now included in log output.
+  * Log entire environment at launch.
+  * Supports redaction of the `log` key as well now for un-parsed logfiles.
+  * Simple example showing how to implement a file-transfer service with the `forward` plugin.
+  * Updated to Fluent Bit [1.7.8](https://www.fluentbit.io/announcements/v1.7.8/).
 * 1.0.3
   * Disables auto-run of Fluent Bit unit tests during RHEL builds due to timing issue making them unreliable: https://github.com/fluent/fluent-bit/issues/3520
   * Added run-as numeric USER to support security improvements.
@@ -260,7 +268,7 @@ For full details have a look at the diff of the tags and associated commits for 
   * Resolved race condition in unit tests for restarting.
 * 1.0.2
   * Major refactor to move from single `main.go` file to Go module across packages with unit tests as well for each sub-component.
-  * Update to Fluent Bit 1.7.4.
+  * Update to Fluent Bit [1.7.4](https://www.fluentbit.io/announcements/v1.7.4/).
   * Linting and other CI improvements.
   * [Addition of extra common information](https://github.com/couchbase/couchbase-fluent-bit/blob/d474c83616f7444e3c627cb63d4fe021969073e6/conf/couchbase/filter-add-common-info.conf) as extra keys when run with the operator (pod and couchbase cluster information).
   * [Additional filters](https://github.com/couchbase/couchbase-fluent-bit/blob/d474c83616f7444e3c627cb63d4fe021969073e6/conf/couchbase/filter-handle-levels.conf) from observability work to standardise log levels for easy use with Grafana, along with [example output configuration](https://github.com/couchbase/couchbase-fluent-bit/blob/d474c83616f7444e3c627cb63d4fe021969073e6/conf/couchbase/out-loki.conf) and supporting documentation.
@@ -272,7 +280,7 @@ For full details have a look at the diff of the tags and associated commits for 
   * Minor licensing updates to pass Red Hat certification checks.
 * 1.0.0
   * Initial release containing the various watchers and parsers.
-  * Based on Fluent Bit 1.7.3
+  * Based on Fluent Bit [1.7.3](https://www.fluentbit.io/announcements/v1.7.3/).
 
 ## License
 

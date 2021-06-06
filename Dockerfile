@@ -1,5 +1,5 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
-FROM fluent/fluent-bit:1.7.7 as production
+FROM fluent/fluent-bit:1.7.8 as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -28,7 +28,7 @@ COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-FROM fluent/fluent-bit:1.7.7-debug as test
+FROM fluent/fluent-bit:1.7.8-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/

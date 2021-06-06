@@ -23,7 +23,7 @@ LDFLAGS = "-s -w -X github.com/couchbase/fluent-bit/pkg/version.version=$(versio
 # Hardcode version values for testing
 TEST_LDFLAGS = "-X github.com/couchbase/fluent-bit/pkg/version.version=1 -X github.com/couchbase/fluent-bit/pkg/version.revision=2 -X github.com/couchbase/fluent-bit/pkg/version.buildNumber=3 -X github.com/couchbase/fluent-bit/pkg/version.gitRevision=456"
 
-.PHONY: all build lint test-unit container container-rhel container-public container-lint container-scan container-rhel-checks container-rhel-tests dist test perf-test test-dist container-clean clean
+.PHONY: all build lint test-unit container container-rhel container-public container-lint container-scan container-rhel-checks container-rhel-tests dist test perf-test generate-logs test-dist container-clean clean
 
 all: clean build lint test-unit container container-rhel container-lint container-scan container-rhel-checks test dist test-dist
 
@@ -116,6 +116,11 @@ test: test-unit container container-rhel container-lint
 
 perf-test: container
 	CONTAINER_UNDER_TEST=${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} tools/monitor-container.sh
+
+# Simple helper to run the container with the flags to generate the new expected logs updated locally
+# Assuming it is run from the root of the repo, i.e. where the Makefile is
+generate-logs: container
+	tools/update-expected-logs.sh
 
 # This target pushes the containers to a public repository.
 # A typical one liner to deploy to the cloud would be:
