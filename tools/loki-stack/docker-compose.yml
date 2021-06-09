@@ -14,7 +14,7 @@ services:
             - log-volume:/opt/couchbase/var/lib/couchbase/logs/:rw
         networks:
             back:
-                aliases: 
+                aliases:
                     - couchbase1.compose.local
     logging:
         container_name: logging
@@ -50,7 +50,7 @@ services:
         volumes:
             - grafana_data:/var/lib/grafana
             - ./grafana/provisioning/:/etc/grafana/provisioning/
-        environment: 
+        environment:
             - GF_SECURITY_ADMIN_PASSWORD=password
 
 volumes:
