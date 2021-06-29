@@ -1,5 +1,7 @@
 # Example Loki Stack with Couchbase Server
 
+The contents of this directory are to support this blog post: https://blog.couchbase.com/using-fluent-bit-for-log-forwarding-processing-with-couchbase-server/
+
 This directory includes everything to run a simple stack up locally using [Docker Compose](https://docs.docker.com/compose/) that supports log forwarding from a Couchbase Server instance to [Loki](https://grafana.com/oss/loki/) and then visualising in [Grafana](https://grafana.com/). This documentation also talks you how to repeat it all by hand.
 
 Whilst the Couchbase Fluent Bit container image is only officially supported with the Couchbase Autonomous Operator on Kubernetes, it can still be used in a non-Kubernetes or on-premise deployment. Fluent Bit started life as a native log forwarding solution for embedded targets after all.

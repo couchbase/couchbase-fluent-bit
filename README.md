@@ -198,6 +198,7 @@ It will all be inside a standard [`msgpack`](https://msgpack.org/) Fluent Bit re
 
 A full example local [Loki](https://grafana.com/docs/loki/latest/overview/) stack deployment (Loki+Grafana - configured) is also provided in the [tools/loki-stack](tools/loki-stack/) directory, this can be run via a simple `docker compose up` command.
 The Grafana instance will then be exposed via `localhost:3000`.
+This also supports a blog post showing how to do this in detail: https://blog.couchbase.com/using-fluent-bit-for-log-forwarding-processing-with-couchbase-server/
 
 ### Configuration
 

@@ -90,10 +90,10 @@ ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
 
 # Need to chmod for log & config output write access
+# Add user to run as
 RUN chmod 777 /fluent-bit/test/ /fluent-bit/test/logs && \
-    chmod 777 /fluent-bit/etc/couchbase
-
-RUN useradd -u 8453 -m -s /bin/false couchbase
+    chmod 777 /fluent-bit/etc/couchbase && \
+    useradd -u 8453 -m -s /bin/false couchbase
 USER 8453
 
 EXPOSE 2020
