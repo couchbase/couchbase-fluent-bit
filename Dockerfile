@@ -1,5 +1,6 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
-FROM fluent/fluent-bit:1.7.8 as production
+ARG FLUENT_BIT_VER
+FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -28,7 +29,8 @@ COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-FROM fluent/fluent-bit:1.7.8-debug as test
+ARG FLUENT_BIT_VER
+FROM fluent/fluent-bit:$FLUENT_BIT_VER-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
@@ -54,6 +56,12 @@ USER 8453
 # Copying the base image to expose for the HTTP server if enabled
 EXPOSE 2020
 
+# Keep track of the versions we are using - not persisted between stages
+ARG FLUENT_BIT_VER
+ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
+ARG PROD_VERSION
+ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
+
 # Wrap our test cases in a script that supports checking for errors and then using an exit code directly
 # https://github.com/fluent/fluent-bit/issues/3268
 # It can also run all test cases in one go then rather than have to list them all individually
@@ -72,6 +80,12 @@ EXPOSE 2020
 # Ensure we run as non-root by default
 COPY non-root.passwd /etc/passwd
 USER 8453
+
+# Keep track of the versions we are using - not persisted between stages
+ARG FLUENT_BIT_VER
+ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
+ARG PROD_VERSION
+ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 
 # Entry point - run our custom binary
 CMD ["/fluent-bit/bin/couchbase-watcher"]

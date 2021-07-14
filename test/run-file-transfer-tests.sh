@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # Simple file transfer example line-by-line
-set -ux
+set -u
 FILE_TRANSFER_TEST_TIMEOUT=${FILE_TRANSFER_TEST_TIMEOUT:-10}
 
 # Run up the receiver first

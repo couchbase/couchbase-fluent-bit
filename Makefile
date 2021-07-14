@@ -1,8 +1,11 @@
 SOURCE = $(shell find . -name *.go -type f)
 bldNum = $(if $(BLD_NUM),$(BLD_NUM),999)
-version = $(if $(VERSION),$(VERSION),1.0.4)
+version = $(if $(VERSION),$(VERSION),1.1.0)
 productVersion = $(version)-$(bldNum)
 ARTIFACTS = build/artifacts/
+
+# Easily test builds for new versions with no code changes
+FLUENT_BIT_VER=1.8.1
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
@@ -64,12 +67,12 @@ test-unit:
 # need to be moved to a separate repo in which case the "docker build" command
 # can't be here anyway.
 container: build
-	docker build -f Dockerfile -t ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} .
-	docker build -f Dockerfile --target test -t ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} .
+	docker build -f Dockerfile --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) -t ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} .
+	docker build -f Dockerfile --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) --target test -t ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} .
 
 container-rhel: build
-	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) -t ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} .
-	docker build -f Dockerfile.rhel --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(VERSION) --target test -t ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} .
+	docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) -t ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} .
+	docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) --target test -t ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} .
 
 container-lint: build lint
 	docker run --rm -i hadolint/hadolint < Dockerfile
@@ -135,8 +138,8 @@ test-dist: dist
 	rm -rf test-dist/
 	mkdir -p test-dist/
 	tar -xzvf dist/couchbase-fluent-bit-image_$(productVersion).tgz -C test-dist/
-	docker build -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
-	docker build -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
+	docker build --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
+	docker build --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
 
 # Remove our images then remove dangling ones to prevent any caching
 container-clean:

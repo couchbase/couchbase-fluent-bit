@@ -51,6 +51,8 @@ echo "COUCHBASE_LOGS set to ${COUCHBASE_LOGS} - put all log files here and expec
 echo "COUCHBASE_LOGS_REBALANCE_TEMPDIR set to ${COUCHBASE_LOGS_REBALANCE_TEMPDIR} - temporary rebalance report output directory"
 echo "EXPECT_TEST_TIMEOUT set to ${EXPECT_TEST_TIMEOUT} - the time taken to run each CI test before we kill it"
 echo "FLUENT_BIT_TEST_TIMEOUT set to ${FLUENT_BIT_TEST_TIMEOUT} - the time taken to run each Fluent Bit test before we kill it"
+echo "FLUENTBIT_VERSION set to ${FLUENTBIT_VERSION} - the version of fluent bit used for this container"
+echo "COUCHBASE_FLUENTBIT_VERSION set to ${COUCHBASE_FLUENTBIT_VERSION} - the version of this container"
 
 # Helper method to run the Fluent Bit expect tests and check for failures.
 function runExpectTest() {

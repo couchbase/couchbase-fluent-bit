@@ -255,6 +255,8 @@ A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
 * main - in progress for next release
+  * Updated to Fluent Bit [1.8.1](https://www.fluentbit.io/announcements/v1.8.1/).
+  * Added [version information into records](conf/couchbase/filter-add-common-info.conf).
 * 1.0.4
   * Switch to using `record_modifier` for [common info](conf/couchbase/filter-add-common-info.conf) so missing variables do not trigger an exit, just an error.
   * Removed Fluent Bit tests from running on every RHEL build: [issue](https://github.com/fluent/fluent-bit/issues/3520) with reliability so only run manually now on version change.
