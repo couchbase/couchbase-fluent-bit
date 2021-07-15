@@ -257,6 +257,8 @@ For full details have a look at the diff of the tags and associated commits for 
 * main - in progress for next release
   * Updated to Fluent Bit [1.8.1](https://www.fluentbit.io/announcements/v1.8.1/).
   * Added [version information into records](conf/couchbase/filter-add-common-info.conf).
+  * Ensures log `level` is always one of `DEBUG, INFO, WARN, ERROR, UNKNOWN` and maintains the original value if not one of these as `original_level`, e.g. `"original_level":"audit","level":"UNKNOWN"`
+  * Splits `Path_Key` (`filename`) into `path` & `file` keys to make it easier to filter on downstream, e.g. `"file_path":"/fluent-bit/test/logs","file":"eventing.log","filename":"/fluent-bit/test/logs/eventing.log"`
 * 1.0.4
   * Switch to using `record_modifier` for [common info](conf/couchbase/filter-add-common-info.conf) so missing variables do not trigger an exit, just an error.
   * Removed Fluent Bit tests from running on every RHEL build: [issue](https://github.com/fluent/fluent-bit/issues/3520) with reliability so only run manually now on version change.
