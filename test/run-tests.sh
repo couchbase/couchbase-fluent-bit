@@ -207,8 +207,8 @@ for i in "${COUCHBASE_LOGS}"/*.expected; do
     if [[ "$i" == "${COUCHBASE_LOGS}/fts.log.expected" || "$i" == "${COUCHBASE_LOGS}/eventing.log.expected" ]]; then
         echo "Ignoring timestamp deltas in $i"
         # Replace timestamps, e.g.: .actual: [1616875582.481815658, {"filename" --> .actual: [__IGNORED__, {"filename"
-        sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$actual"
-        sed -i 's/actual: \[.*\, /actual: \[__IGNORED__, /g' "$expected"
+        sed -i 's/actual: \[.*\, {/actual: \[__IGNORED__, {/g' "$actual"
+        sed -i 's/actual: \[.*\, {/actual: \[__IGNORED__, {/g' "$expected"
     fi
 
     if diff -a -q "${actual}" "${expected}"; then
