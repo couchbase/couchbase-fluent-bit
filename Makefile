@@ -138,8 +138,8 @@ test-dist: dist
 	rm -rf test-dist/
 	mkdir -p test-dist/
 	tar -xzvf dist/couchbase-fluent-bit-image_$(productVersion).tgz -C test-dist/
-	docker build --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
-	docker build --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
+	docker build -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
+	docker build -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
 
 # Remove our images then remove dangling ones to prevent any caching
 container-clean:
