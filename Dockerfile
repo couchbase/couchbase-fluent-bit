@@ -1,7 +1,6 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
-# Have to default for the build framework
-ARG FLUENT_BIT_VER=1.8.1
-FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
+# Have to use a fixed base image for the build framework
+FROM fluent/fluent-bit:1.8.1 as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -30,8 +29,7 @@ COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY redaction/redaction.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=1.8.1
-FROM fluent/fluent-bit:$FLUENT_BIT_VER-debug as test
+FROM fluent/fluent-bit:1.8.1-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
