@@ -11,3 +11,5 @@ bin/
 test-dist/
 # Tools output
 tools/*.csv*
+tools/integration-test/logs/*
+*.tar.gz

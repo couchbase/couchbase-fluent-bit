@@ -1,0 +1,41 @@
+pipeline {
+    agent {
+        label 'docker'
+    }
+    parameters {
+        string(name: 'server_image', defaultValue: 'couchbase/server:6.6.2', description: 'Version of Couchbase Server to test against')
+    }
+    environment {
+        GOVERSION = '1.16.3'
+        COMPOSEVERSION='1.29.2'
+        PATH = "${env.WORKSPACE}/bin:${env.WORKSPACE}/go/bin:${PATH}"
+    }
+
+    stages {
+        stage('Go Install') {
+            steps {
+                sh 'wget -q -O- https://dl.google.com/go/go${GOVERSION}.linux-amd64.tar.gz | tar xz'
+            }
+        }
+        stage('Docker Compose Install') {
+            steps {
+                sh 'mkdir -p bin'
+                sh 'curl -L "https://github.com/docker/compose/releases/download/$COMPOSEVERSION}/docker-compose-$(uname -s)-$(uname -m)" -o bin/docker-compose'
+                sh 'chmod a+x bin/docker-compose'
+            }
+        }
+        stage('Build & test') {
+            steps {
+                sh "make integration-test -e SERVER_IMAGE=${params.server_image}"
+            }
+        }
+    }
+
+    post {
+        always {
+            archiveArtifacts artifacts: '**/server-logs-*.tar.gz', fingerprint: true, allowEmptyArchive: true
+            sh 'make clean'
+            cleanWs()
+        }
+    }
+}

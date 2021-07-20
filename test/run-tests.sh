@@ -67,7 +67,7 @@ function runExpectTest() {
 
     # Currently it always exits with 0 so we have to check for a specific error message.
     # https://github.com/fluent/fluent-bit/issues/3268
-    if grep -iq "exception on rule" "$testLog" ; then
+    if grep -iq -e "exception on rule" -e "invalid config" "$testLog" ; then
         cat "$testLog"
         cat "$testConfig"
         echo "FAILED: $testLog"
