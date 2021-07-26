@@ -8,6 +8,8 @@ services:
             - ./configure-cbs.sh:/entrypoint.sh
     logging:
         image: ${FLUENT_BIT_IMAGE}
+        # Override the entrypoint to prevent auto-restart
+        command: /fluent-bit/bin/fluent-bit -c /fluent-bit/etc/fluent-bit.conf
         ports:
             - "2020:2020"
         depends_on:

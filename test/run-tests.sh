@@ -78,9 +78,22 @@ function runExpectTest() {
 }
 
 if [[ ! -x "${COUCHBASE_LOGS_BINARY}" ]]; then
-    echo "Unable to execute ${COUCHBASE_LOGS_BINARY}"
+    echo "FAILED: Unable to execute ${COUCHBASE_LOGS_BINARY}"
     exit 1
 fi
+
+# Run a sanity check that the supplied configurations are acceptable in their entirety
+for i in /fluent-bit/etc/fluent*.conf; do
+    # Ignore invalid/non-files
+    [[ ! -f "$i" ]] && continue
+    if "${COUCHBASE_LOGS_BINARY}" --dry-run --config="$i"; then
+        echo "PASSED: ${COUCHBASE_LOGS_BINARY} --dry-run --config=$i"
+    else
+        cat "$i"
+        echo "FAILED: ${COUCHBASE_LOGS_BINARY} --dry-run --config=$i"
+        exit 1
+    fi
+done
 
 if [[ "${RUN_FLUENT_BIT_TESTS}" == "yes" ]]; then
     # Some of the tests need write permission

@@ -83,6 +83,18 @@ func TestCommandRun(t *testing.T) {
 	}
 }
 
+// Check we fail to start appropriately as well.
+func TestCommandFailedRun(t *testing.T) {
+	t.Parallel()
+
+	config := fluent.NewFluentBitConfig("/iamrootandunabletodoanything", "invalidconfig", "/i/do/not/exist")
+	fluent.Start(config)
+
+	if config.IsCleanStart() {
+		t.Error("Incorrectly started with invalid configuration")
+	}
+}
+
 // Check that we can actually stop the binary.
 func TestCommandStop(t *testing.T) {
 	t.Parallel()

@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/couchbase/fluent-bit/pkg/common"
+	"go.uber.org/zap/zapcore"
 )
 
 type WatcherConfig struct {
@@ -32,6 +33,17 @@ type WatcherConfig struct {
 	couchbaseLogDir,
 	rebalanceOutputDir,
 	couchbaseWatchDir string
+}
+
+func (cw *WatcherConfig) MarshalLogObject(enc zapcore.ObjectEncoder) error {
+	enc.AddString("fluentBitConfigDir", cw.fluentBitConfigDir)
+	enc.AddString("fluentBitBinaryPath", cw.fluentBitBinaryPath)
+	enc.AddString("fluentBitConfigFilePath", cw.fluentBitConfigFilePath)
+	enc.AddString("couchbaseLogDir", cw.couchbaseLogDir)
+	enc.AddString("rebalanceOutputDir", cw.rebalanceOutputDir)
+	enc.AddString("couchbaseWatchDir", cw.couchbaseWatchDir)
+
+	return nil
 }
 
 func NewWatcherConfigFromDefaults() *WatcherConfig {

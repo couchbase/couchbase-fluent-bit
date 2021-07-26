@@ -18,6 +18,7 @@ package fluent
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
@@ -48,6 +49,7 @@ type Config struct {
 	binPath, cfgPath, watchDir string
 	totalStarts                int
 	cleanStop                  bool
+	cleanStart                 bool
 }
 
 func NewFluentBitConfig(binary, config, watchDir string) *Config {
@@ -61,6 +63,7 @@ func NewFluentBitConfig(binary, config, watchDir string) *Config {
 		watchDir:     watchDir,
 		totalStarts:  0,
 		cleanStop:    false,
+		cleanStart:   false,
 	}
 
 	return &fb
@@ -71,6 +74,13 @@ func (fb *Config) GetStartCount() int {
 	defer fb.mutex.Unlock()
 
 	return fb.totalStarts
+}
+
+func (fb *Config) IsCleanStart() bool {
+	fb.mutex.Lock()
+	defer fb.mutex.Unlock()
+
+	return fb.cleanStart
 }
 
 func Start(fb *Config) {
@@ -96,16 +106,23 @@ func Start(fb *Config) {
 
 	fb.totalStarts++
 	fb.cleanStop = false
+	fb.cleanStart = false
 
 	if err := fb.cmd.Start(); err != nil {
-		log.Errorw("Start Fluent bit error", "error", err)
+		config, configErr := ioutil.ReadFile(fb.cfgPath)
+		if configErr != nil {
+			log.Errorw("Start Fluent bit error", "error", err, "binary", fb.binPath, "config", fb.cfgPath, "contents", string(config))
+		} else {
+			log.Errorw("Start Fluent bit error", "error", err, "binary", fb.binPath, "config", fb.cfgPath, "configError", configErr)
+		}
 
 		fb.cmd = nil
 
 		return
 	}
 
-	log.Info("Fluent bit started")
+	fb.cleanStart = true
+	log.Infow("Fluent bit started", "binary", fb.binPath, "config", fb.cfgPath)
 }
 
 func Wait(fb *Config) {
@@ -117,7 +134,13 @@ func Wait(fb *Config) {
 
 	// If killed by us this is normal
 	if !fb.cleanStop {
-		log.Errorw("Fluent bit exited", "error", fb.cmd.Wait())
+		// If not killed by us then grab the config as well to check if that is the cause
+		config, err := ioutil.ReadFile(fb.cfgPath)
+		if err != nil {
+			log.Errorw("Fluent bit exited", "error", fb.cmd.Wait(), "binary", fb.binPath, "config", fb.cfgPath, "configError", err)
+		} else {
+			log.Errorw("Fluent bit exited", "error", fb.cmd.Wait(), "binary", fb.binPath, "config", fb.cfgPath, "contents", string(config))
+		}
 	}
 	// Once the fluent bit has executed for 10 minutes without any problems,
 	// it should resets the restart backoff timer.
