@@ -255,8 +255,9 @@ The branching strategy is to minimise any branches other than `main` following t
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
-* main - in progress for next release
-  * Updated to Fluent Bit [1.8.1](https://www.fluentbit.io/announcements/v1.8.1/).
+* main - in progress for next release (1.1.0)
+  * Updated to Fluent Bit [1.8.2](https://www.fluentbit.io/announcements/v1.8.2/).
+    * Matching change in versions here, 1.0.4 --> 1.1.0.
   * Added [version information into records](conf/couchbase/filter-add-common-info.conf).
   * Ensures log `level` is always one of `DEBUG, INFO, WARN, ERROR, UNKNOWN` and maintains the original value if not one of these as `original_level`, e.g. `"original_level":"audit","level":"UNKNOWN"`.
   * Splits `Path_Key` (`filename`) into `path` & `file` keys to make it easier to filter on downstream, e.g. `"file_path":"/fluent-bit/test/logs","file":"eventing.log","filename":"/fluent-bit/test/logs/eventing.log"`.

@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi8/ubi:8.4 as builder
 # hadolint ignore=DL3041
 RUN dnf update -y && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip && dnf clean all
 
-ARG FLUENT_BIT_VER=1.8.1
+ARG FLUENT_BIT_VER=1.8.2
 ADD https://github.com/fluent/fluent-bit/archive/refs/tags/v${FLUENT_BIT_VER}.zip /source.zip
 RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src \
       && unzip /source.zip -d /tmp/src && mv /tmp/src/fluent-bit-*/* /tmp/src/ \
@@ -100,7 +100,7 @@ EXPOSE 2020
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.1
+ARG FLUENT_BIT_VER=1.8.2
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -115,7 +115,7 @@ EXPOSE 2020
 CMD ["/fluent-bit/bin/couchbase-watcher"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.1
+ARG FLUENT_BIT_VER=1.8.2
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION

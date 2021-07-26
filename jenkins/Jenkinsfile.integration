@@ -20,7 +20,7 @@ pipeline {
         stage('Docker Compose Install') {
             steps {
                 sh 'mkdir -p bin'
-                sh 'curl -L "https://github.com/docker/compose/releases/download/$COMPOSEVERSION}/docker-compose-$(uname -s)-$(uname -m)" -o bin/docker-compose'
+                sh 'curl -L "https://github.com/docker/compose/releases/download/${COMPOSEVERSION}/docker-compose-$(uname -s)-$(uname -m)" -o bin/docker-compose'
                 sh 'chmod a+x bin/docker-compose'
             }
         }
