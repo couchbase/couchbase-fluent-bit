@@ -36,7 +36,7 @@ all: clean build lint test-unit container container-rhel container-lint containe
 build: $(SOURCE) go.mod
 	for platform in linux darwin ; do \
 	  echo "Building $$platform binary" ; \
-	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher ./cmd ; \
+	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher ./cmd ; \
 	done
 
 image-artifacts: build
@@ -61,7 +61,7 @@ lint:
 
 test-unit:
 	go clean -testcache
-	go test -ldflags $(TEST_LDFLAGS) -timeout 30s -v ./pkg/...
+	go test -trimpath -ldflags $(TEST_LDFLAGS) -timeout 30s -v ./pkg/...
 
 # NOTE: This target is only for local development. While we use this Dockerfile
 # (for now), the actual "docker build" command is located in the Jenkins job

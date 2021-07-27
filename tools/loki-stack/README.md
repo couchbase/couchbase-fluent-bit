@@ -100,7 +100,7 @@ This is just an example of the output you may have. Note that each log file has 
 
 Running the container can be done as part of a startup script with systemd or similar as Couchbase Server would be. The container runtime can also automatically [start](https://docs.docker.com/engine/reference/run/#restart-policies---restart) specified containers every time.
 
-## Loke and Grafana
+## Loki and Grafana
 
 The default configuration provided by the container is to send all the logs to standard output. However you can provide your own configuration file to use to do different things with no other change - to modify log processing and forwarding is just a configuration change which is one of the key benefits of fluent bit.
 
