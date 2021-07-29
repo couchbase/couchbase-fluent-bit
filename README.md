@@ -243,6 +243,16 @@ As indicated above, Couchbase only supports the use of this image when used with
 Specificially, the default configuration provided by the operator and the ability to provide a custom configuration is supported.
 Best efforts are made to confirm that custom configurations will work with various plugins but any issues with the custom configuration, plugins or other components are outside of the supported scope.
 
+### Compatibility matrix for CAO
+
+CAO = Couchbase Autonomous Operator
+CFB = Couchbase Fluent Bit
+
+| CAO Version | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 |
+|-------------|----------------|-------|-------|-------|-------|-------|-------|
+| 2.2.0       |                | X     | X     | X     | X     | X     |       |
+| 2.2.1       |                | X     | X     | X     | X     | X     | X     |
+
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
 Updates will be pushed to the `main` branch often and then tagged once released as a new image version.
@@ -255,7 +265,8 @@ The branching strategy is to minimise any branches other than `main` following t
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
-* main - in progress for next release (1.1.0)
+* main - in progress for next release (1.1.1)
+* 1.1.0
   * Updated to Fluent Bit [1.8.2](https://www.fluentbit.io/announcements/v1.8.2/).
     * Matching change in versions here, 1.0.4 --> 1.1.0.
   * Added [version information into records](conf/couchbase/filter-add-common-info.conf).
