@@ -266,7 +266,10 @@ A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
 * main - in progress for next release (1.1.1)
+  * Updated to Fluent Bit [1.8.3](https://www.fluentbit.io/announcements/v1.8.3/).
   * Updates to [support on-premise usage with rotated memcached logs](https://issues.couchbase.com/browse/K8S-2343).
+  * Resolve issue with [missing version information in the output](https://issues.couchbase.com/browse/K8S-2355).
+  * Updated [loki stack example](tools/loki-stack/) to handle changes to user security preventing log file reading.
 * 1.1.0
   * Updated to Fluent Bit [1.8.2](https://www.fluentbit.io/announcements/v1.8.2/).
     * Matching change in versions here, 1.0.4 --> 1.1.0.

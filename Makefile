@@ -1,18 +1,18 @@
 SOURCE = $(shell find . -name *.go -type f)
 bldNum = $(if $(BLD_NUM),$(BLD_NUM),999)
-version = $(if $(VERSION),$(VERSION),1.1.0)
+version = $(if $(VERSION),$(VERSION),1.1.1)
 productVersion = $(version)-$(bldNum)
 ARTIFACTS = build/artifacts/
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=1.8.2
+FLUENT_BIT_VER=1.8.3
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
 # For testing
-SERVER_IMAGE = couchbase/server:6.6.2
+SERVER_IMAGE = couchbase/server:7.0.0
 
 # What exact revision is this?
 GIT_REVISION := $(shell git rev-parse HEAD)

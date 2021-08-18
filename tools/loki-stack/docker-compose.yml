@@ -12,6 +12,7 @@ services:
             - "11210-11211:11210-11211"
         volumes:
             - log-volume:/opt/couchbase/var/lib/couchbase/logs/:rw
+            - ./configure-cbs.sh:/entrypoint.sh
         networks:
             back:
                 aliases:
