@@ -38,6 +38,7 @@ This image is used to parse and send the following logs to standard output by de
 * http_access_internal.log
 * indexer.log
 * json_rpc.log
+* mapreduce_errors.log
 * memcached.log
 * metakv.log
 * ns_couchdb.log
@@ -161,7 +162,7 @@ version: "3.9"
 services:
     couchbase-server1:
         container_name: db1
-        image: couchbase:6.6.2
+        image: couchbase:7.0.1
         ports:
           - "8091-8096:8091-8096"
           - "11210-11211:11210-11211"
@@ -169,19 +170,19 @@ services:
           - log-volume:/opt/couchbase/var/lib/couchbase/logs/:rw
     couchbase-server2:
         container_name: db2
-        image: couchbase:6.6.2
+        image: couchbase:7.0.1
         expose:
             - "8091-8096"
             - "11210-11211"
     couchbase-server3:
         container_name: db3
-        image: couchbase:6.6.2
+        image: couchbase:7.0.1
         expose:
             - "8091-8096"
             - "11210-11211"
     log-streamer:
         container_name: logging
-        image: couchbase/fluent-bit:1.0.1
+        image: couchbase/fluent-bit:1.1.0
         depends_on:
             - couchbase-server1
         environment:
@@ -248,10 +249,10 @@ Best efforts are made to confirm that custom configurations will work with vario
 CAO = Couchbase Autonomous Operator
 CFB = Couchbase Fluent Bit
 
-| CAO Version | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 |
-|-------------|----------------|-------|-------|-------|-------|-------|-------|
-| 2.2.0       |                | X     | X     | X     | X     | X     |       |
-| 2.2.1       |                | X     | X     | X     | X     | X     | X     |
+| CAO Version | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 | 1.1.1 |
+|-------------|----------------|-------|-------|-------|-------|-------|-------|-------|
+| 2.2.0       |                | X     | X     | X     | X     | X     |       |       |
+| 2.2.1       |                | X     | X     | X     | X     | X     | X     | X     |
 
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
@@ -266,10 +267,12 @@ A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
 * main - in progress for next release (1.1.1)
-  * Updated to Fluent Bit [1.8.3](https://www.fluentbit.io/announcements/v1.8.3/).
+  * Updated to Fluent Bit [1.8.7](https://www.fluentbit.io/announcements/v1.8.7/).
   * Updates to [support on-premise usage with rotated memcached logs](https://issues.couchbase.com/browse/K8S-2343).
   * Resolve issue with [missing version information in the output](https://issues.couchbase.com/browse/K8S-2355).
   * Updated [loki stack example](tools/loki-stack/) to handle changes to user security preventing log file reading.
+  * Added support for [mapreduce_errors.log](https://issues.couchbase.com/browse/K8S-2426) parsing.
+  * Added [test for rebalance output](https://issues.couchbase.com/browse/K8S-2394) being present.
 * 1.1.0
   * Updated to Fluent Bit [1.8.2](https://www.fluentbit.io/announcements/v1.8.2/).
     * Matching change in versions here, 1.0.4 --> 1.1.0.

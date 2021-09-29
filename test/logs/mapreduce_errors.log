@@ -1,0 +1,1 @@
+[mapreduce_errors:error,2021-09-29T11:18:39.517Z,couchdb_ns_1@cb.local:<0.18870.1>:couch_set_view_updater:-do_maps/3-fun-0-:885]Bucket `travel-sample`, main group `_design/dev_test`, error mapping document `<ud>test</ud>` for view `repro`: <ud>too long key emitted: 4806 bytes (line 2:2)</ud>

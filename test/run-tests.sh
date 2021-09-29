@@ -233,4 +233,18 @@ for i in "${COUCHBASE_LOGS}"/*.expected; do
     fi
 done
 
+# Finally confirm we have rebalance output although skip verifying the actual JSON
+if [[ -d "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" ]]; then
+    countOfInput=$(find "${COUCHBASE_LOGS}/rebalance" -type f -name "rebalance_report_*.json" -print |wc -l)
+    countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -type f -name "rebalance*.actual" -print |wc -l)
+
+    if [[ $countOfInput -eq $countOfOutput ]]; then
+        echo "PASSED: Handled all rebalance reports"
+    else
+        echo "FAILED: Unable to handle rebalance reports, $countOfInput != $countOfOutput"
+        ls -l "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
+        exitCode=1
+    fi
+fi
+
 exit $exitCode
