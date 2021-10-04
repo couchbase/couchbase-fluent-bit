@@ -273,6 +273,7 @@ For full details have a look at the diff of the tags and associated commits for 
   * Updated [loki stack example](tools/loki-stack/) to handle changes to user security preventing log file reading.
   * Added support for [mapreduce_errors.log](https://issues.couchbase.com/browse/K8S-2426) parsing.
   * Added [test for rebalance output](https://issues.couchbase.com/browse/K8S-2394) being present.
+  * Added `level_numeric` field for a [numeric value for the log level](https://issues.couchbase.com/browse/K8S-2402) to simplify querying downstream.
 * 1.1.0
   * Updated to Fluent Bit [1.8.2](https://www.fluentbit.io/announcements/v1.8.2/).
     * Matching change in versions here, 1.0.4 --> 1.1.0.
