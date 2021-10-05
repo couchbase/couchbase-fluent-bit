@@ -69,13 +69,16 @@ func TestLoadEnvironment(t *testing.T) {
 		"KUBERNETES_ANNOTATION": "true",
 		"KUBERNETES_LABEL":      "true",
 		"KUBERNETES_LABEL2":     "false",
+		// Special annotation processing, only key should be uppercase
+		"ENABLE_LOKI": "true",
+		"LOKI_HOST":   "loki.test",
 	}
 
 	for key := range expected {
 		if os.Getenv(key) != expected[key] {
 			t.Errorf("%q : %q != %q", key, os.Getenv(key), expected[key])
+		} else {
+			t.Logf("%q : %q - OK", key, expected[key])
 		}
-
-		t.Logf("%q : %q - OK", key, expected[key])
 	}
 }

@@ -55,7 +55,9 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Copying the base image to expose for the HTTP server if enabled
-EXPOSE 2020
+ARG HTTP_PORT=2020
+ENV HTTP_PORT=$HTTP_PORT
+EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
 ARG FLUENT_BIT_VER=1.8.7
@@ -76,7 +78,9 @@ COPY licenses/* /licenses/
 COPY README.md /help.1
 
 # Copying the base image to expose for the HTTP server if enabled
-EXPOSE 2020
+ARG HTTP_PORT=2020
+ENV HTTP_PORT=$HTTP_PORT
+EXPOSE $HTTP_PORT
 
 # Ensure we run as non-root by default
 COPY non-root.passwd /etc/passwd
@@ -87,6 +91,10 @@ ARG FLUENT_BIT_VER=1.8.7
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
+
+# Some support for Loki customisation but ensure we set defaults
+ENV LOKI_HOST=loki
+ENV LOKI_PORT=3100
 
 # Entry point - run our custom binary
 CMD ["/fluent-bit/bin/couchbase-watcher"]

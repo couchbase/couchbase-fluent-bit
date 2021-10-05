@@ -1,0 +1,27 @@
+cluster:
+  image: couchbase/server:7.0.1
+  logging:
+    server:
+      enabled: true
+      sidecar:
+        image: "couchbase/fluent-bit:v1"
+  # Now add the custom labels
+  servers:
+    default:
+      size: 3
+      pod:
+        metadata:
+          annotations:
+            fluentbit.couchbase.com/enable_output: "loki"
+            fluentbit.couchbase.com/loki_host: loki.monitoring
+      volumeMounts:
+        default: couchbase
+        data: couchbase
+        index: couchbase
+  volumeClaimTemplates:
+  - metadata:
+      name: couchbase
+    spec:
+      resources:
+        requests:
+          storage: 1Gi

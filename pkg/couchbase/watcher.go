@@ -290,7 +290,13 @@ func AddCouchbaseWatcher(g *run.Group, config WatcherConfig) error {
 }
 
 func CreateWatchers(cw WatcherConfig) (*run.Group, error) {
-	fb := fluent.NewFluentBitConfig(cw.GetFluentBitBinaryPath(), cw.GetFluentBitConfigFilePath(), cw.GetWatchedFluentBitConfigDir())
+	fb := fluent.NewFluentBitConfig(
+		cw.GetFluentBitBinaryPath(),
+		cw.GetFluentBitConfigFilePath(),
+		cw.GetWatchedFluentBitConfigDir(),
+		cw.GetCouchbaseFluentBitConfigDir(),
+		cw.GetExtraOutputPlugins(),
+	)
 	if fb == nil {
 		return nil, ErrNoFluentBitConfig
 	}

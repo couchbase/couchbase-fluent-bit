@@ -27,6 +27,8 @@ services:
             - loki
         environment:
             - COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs
+            - LOKI_HOST=loki
+            - LOKI_PORT=3100
         volumes:
             - log-volume:/opt/couchbase/var/lib/couchbase/logs/:ro
             - ./fluent-bit.conf:/fluent-bit/config/fluent-bit.conf:ro

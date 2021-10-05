@@ -33,7 +33,9 @@ type WatcherConfig struct {
 	fluentBitConfigFilePath,
 	couchbaseLogDir,
 	rebalanceOutputDir,
-	couchbaseWatchDir string
+	couchbaseWatchDir,
+	couchbaseConfigDir,
+	extraOutputPlugins string
 }
 
 func (cw *WatcherConfig) MarshalLogObject(enc zapcore.ObjectEncoder) error {
@@ -43,6 +45,8 @@ func (cw *WatcherConfig) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	enc.AddString("couchbaseLogDir", cw.couchbaseLogDir)
 	enc.AddString("rebalanceOutputDir", cw.rebalanceOutputDir)
 	enc.AddString("couchbaseWatchDir", cw.couchbaseWatchDir)
+	enc.AddString("couchbaseConfigDir", cw.couchbaseConfigDir)
+	enc.AddString("extraOutputPlugins", cw.extraOutputPlugins)
 
 	return nil
 }
@@ -58,6 +62,8 @@ func NewWatcherConfigFromDefaults() *WatcherConfig {
 	couchbaseWatchDir := common.GetRebalanceReportDir()
 	// We need write access to this directory
 	rebalanceOutputDir := common.GetRebalanceOutputDir()
+	// Couchbase configuration directory, used for adding output plugins dynamically
+	couchbaseConfigDir := common.GetCouchbaseConfigDir()
 
 	config := WatcherConfig{
 		fluentBitConfigDir:      fluentBitConfigDir,
@@ -66,6 +72,8 @@ func NewWatcherConfigFromDefaults() *WatcherConfig {
 		couchbaseLogDir:         couchbaseLogDir,
 		rebalanceOutputDir:      rebalanceOutputDir,
 		couchbaseWatchDir:       couchbaseWatchDir,
+		couchbaseConfigDir:      couchbaseConfigDir,
+		extraOutputPlugins:      os.Getenv(common.EnableOutputEnvVar),
 	}
 
 	log.Infow("Using configuration", "config", config)
@@ -99,6 +107,14 @@ func (cw *WatcherConfig) GetFluentBitConfigFilePath() string {
 
 func (cw *WatcherConfig) GetWatchedFluentBitConfigDir() string {
 	return filepath.Clean(cw.fluentBitConfigDir)
+}
+
+func (cw *WatcherConfig) GetCouchbaseFluentBitConfigDir() string {
+	return filepath.Clean(cw.couchbaseConfigDir)
+}
+
+func (cw *WatcherConfig) GetExtraOutputPlugins() string {
+	return cw.extraOutputPlugins
 }
 
 const rebalanceDirPermissions fs.FileMode = 0700

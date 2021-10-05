@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -69,7 +70,7 @@ func TestCommandRun(t *testing.T) {
 	testFile := filepath.Join(dir, "test.exists")
 
 	// Use a custom binary, i.e. sleep, for testing
-	config := fluent.NewFluentBitConfig("/bin/bash", getCustomCommand(testFile), dir)
+	config := fluent.NewFluentBitConfig("/bin/bash", getCustomCommand(testFile), dir, "", "")
 
 	if testFileExists(testFile) {
 		t.Error("Test file already exists at the start")
@@ -87,7 +88,7 @@ func TestCommandRun(t *testing.T) {
 func TestCommandFailedRun(t *testing.T) {
 	t.Parallel()
 
-	config := fluent.NewFluentBitConfig("/iamrootandunabletodoanything", "invalidconfig", "/i/do/not/exist")
+	config := fluent.NewFluentBitConfig("/iamrootandunabletodoanything", "invalidconfig", "/i/do/not/exist", "", "")
 	fluent.Start(config)
 
 	if config.IsCleanStart() {
@@ -100,7 +101,7 @@ func TestCommandStop(t *testing.T) {
 	t.Parallel()
 
 	// Run forever (well a long time)
-	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 10000", "")
+	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 10000", "", "", "")
 
 	// Explicit timeout
 	timeout := time.After(time.Second)
@@ -130,7 +131,7 @@ func TestFluentBitRestartOnConfigChange(t *testing.T) {
 	testFile := filepath.Join(dir, "test.restarts")
 
 	// Use a custom binary, i.e. sleep, for testing
-	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 20000", dir)
+	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 20000", dir, "", "")
 
 	var g run.Group
 	if err := fluent.AddDynamicConfigWatcher(&g, config); err != nil {
@@ -181,5 +182,52 @@ func TestFluentBitRestartOnConfigChange(t *testing.T) {
 
 	if err := g.Run(); err != nil {
 		t.Errorf("Error during test: %v", err)
+	}
+}
+
+func TestAddDynamicConfig(t *testing.T) {
+	t.Parallel()
+
+	defaultConfig := filepath.Clean("../../conf/fluent-bit.conf")
+	couchbaseConfigDir := filepath.Clean("../../conf/couchbase")
+
+	// None of these should generate a custom configuration
+	for _, testvalue := range []string{"stdout", "stdout,stdout", "stdout,", ",,"} {
+		actual, err := fluent.AddDynamicConfig(defaultConfig, couchbaseConfigDir, testvalue)
+
+		if err != nil {
+			t.Errorf("%s: %q", testvalue, err.Error())
+		}
+
+		if actual != defaultConfig {
+			t.Errorf("%s: %q != %q", testvalue, actual, defaultConfig)
+		}
+	}
+
+	// Now test for Loki (extend as we add others)
+	for _, testvalue := range []string{"stdout,loki", "loki,stdout", "Loki"} {
+		actual, err := fluent.AddDynamicConfig(defaultConfig, couchbaseConfigDir, testvalue)
+		defer os.Remove(actual)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if actual == defaultConfig {
+			t.Errorf("%s: no extension to %q", testvalue, actual)
+		}
+
+		// now check our output
+		contents, err := ioutil.ReadFile(actual)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		fileContents := string(contents)
+		for _, plugin := range strings.Split(testvalue, ",") {
+			if !strings.Contains(fileContents, strings.ToLower(plugin)) {
+				t.Errorf("%s: unable to find %s in output file: %q", testvalue, plugin, fileContents)
+			}
+		}
 	}
 }

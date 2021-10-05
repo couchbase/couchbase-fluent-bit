@@ -1,1 +1,3 @@
 KUBERNETES_ANNOTATION=true
+fluentbit.couchbase.com/enable.loki=true
+fluentbit.couchbase.com/loki.host=loki.test

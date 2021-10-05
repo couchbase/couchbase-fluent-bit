@@ -206,13 +206,46 @@ This also supports a blog post showing how to do this in detail: https://blog.co
 
 | Environment variable | Description | Default |
 | --- | --- | --- |
+| COUCHBASE_FLUENT_BIT_CONFIG | The directory containing the Couchbase (or other) configuration files, primarily used for dynamic output configuration. | /fluent-bit/etc/couchbase |
 | COUCHBASE_LOGS | The directory in which to find the various Couchbase logs we are interested in. | /opt/couchbase/var/couchbase/logs |
-| COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
-| COUCHBASE_LOGS_DYNAMIC_CONFIG | The directory to watch for config changes and restart Fluent Bit. | /fluent-bit/config |
-| COUCHBASE_LOGS_CONFIG_FILE | The config file to use when starting Fluent Bit. | /fluent-bit/config/fluent-bit.conf |
 | COUCHBASE_LOGS_BINARY | The Fluent Bit binary to launch. | /fluent-bit/bin/fluent-bit |
+| COUCHBASE_LOGS_CONFIG_FILE | The config file to use when starting Fluent Bit. | /fluent-bit/config/fluent-bit.conf |
+| COUCHBASE_LOGS_DYNAMIC_CONFIG | The directory to watch for config changes and restart Fluent Bit. | /fluent-bit/config |
+| COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
+| COUCHBASE_K8S_CONFIG_DIR | The location where [DownwardAPI](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/) pushes pod meta-data to load as environment variables. | /etc/podinfo |
+| ENABLE_OUTPUT | A comma-separated list of extra output plugins to enable on top of the default configuration. | |
+| LOKI_HOST | The hostname used by the Loki output plugin (if enabled). | loki |
+| LOKI_PORT | The port used by the Loki output plugin (if enabled). | 3100 |
+| HTTP_PORT | The port used for the HTTP server run by Fluent Bit (enabled by default). | 2020 |
 
-Be careful to make sure you have enough file descriptors configured as available to use this functionality, particularly for local development, e.g. KIND.
+Be careful to make sure you have enough file descriptors configured to use this functionality, particularly for local development with something like Kubernetes-In-Docker(KIND).
+
+### CAO and K8S labels
+
+The Couchbase Autonomous Operator (CAO) automatically pushes all pod labels & annotations into the container via the [DownwardAPI](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/).
+These are then loaded as environment variables by the Couchbase watcher process so this can be a very useful way to pass configuration into a container.
+
+In addition, any variables that start with the `fluentbit.couchbase.com/` have some additional processing applied: the prefix is removed and everything left is upper-cased plus special characters replaced with underscores.
+
+`fluentbit.couchbase.com/loki_host: loki.monitoring` will therefore provide `LOKI_HOST=loki.monitoring`.
+
+User-defined labels and annotations can be specified with CAO via the pod template.
+
+### Output plugin dynamic enabling
+
+Output plugins can be dynamically added to the default configuration by the watcher using the `ENABLE_OUTPUT` environment variable.
+This is a comma-separated list of output plugin configuration to include, the value in the list is used to specify the full filename like so:
+<`COUCHBASE_FLUENT_BIT_CONFIG` variable value>/out-<`ENABLE_OUTPUT` value>.conf
+We first check that the specified file exists and if it does then we add an `@include` statement for the file to the end of the configuration dynamically prior to starting Fluent Bit.
+Changes in the watched configuration will then have the extra plugins re-applied automatically.
+The major benefit of this for CAO deployments is we only need to have user-defined labels like so to set up Loki usage:
+```
+      pod:
+        metadata:
+          annotations:
+            fluentbit.couchbase.com/enable.output: "loki"
+            fluentbit.couchbase.com/loki.host: loki.monitoring
+```
 
 ## Building
 
@@ -249,10 +282,11 @@ Best efforts are made to confirm that custom configurations will work with vario
 CAO = Couchbase Autonomous Operator
 CFB = Couchbase Fluent Bit
 
-| CAO Version | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 | 1.1.1 |
-|-------------|----------------|-------|-------|-------|-------|-------|-------|-------|
-| 2.2.0       |                | X     | X     | X     | X     | X     |       |       |
-| 2.2.1       |                | X     | X     | X     | X     | X     | X     | X     |
+| CAO Version  | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 | 1.1.1 | Next (1.1.2) |
+|--------------|----------------|-------|-------|-------|-------|-------|-------|-------|--------------|
+| 2.2.0        |                | X     | X     | X     | X     | X     |       |       |              |
+| 2.2.1        |                | X     | X     | X     | X     | X     | X     | X     | X            |
+| Next (2.3.0) |                |       |       |       |       |       | X     | X     | X            |
 
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
@@ -266,7 +300,11 @@ The branching strategy is to minimise any branches other than `main` following t
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
-* main - in progress for next release (1.1.1)
+* main - in progress for next release (1.1.2)
+  * Updated to Go 1.17.1 - this relates to the internal Watcher code layered on top of Fluent Bit.
+  * Additional configuration variables now available for [Loki output and the HTTP server](https://issues.couchbase.com/browse/K8S-2354).
+  * New support for dynamically enabling output plugins via environment variables fed in from [Kubernetes labels or annotations](./tools/loki-k8s-stack/values.yaml).
+* 1.1.1
   * Updated to Fluent Bit [1.8.7](https://www.fluentbit.io/announcements/v1.8.7/).
   * Updates to [support on-premise usage with rotated memcached logs](https://issues.couchbase.com/browse/K8S-2343).
   * Resolve issue with [missing version information in the output](https://issues.couchbase.com/browse/K8S-2355).

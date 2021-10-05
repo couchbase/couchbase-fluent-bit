@@ -126,9 +126,6 @@ perf-test: container
 # Runs an integration test using the server image specified to ensure no errors are found during a test run.
 # To set the server image: make -e SERVER_IMAGE=...
 integration-test: container
-	SERVER_IMAGE=${SERVER_IMAGE} \
-	DOCKER_USER=${DOCKER_USER} \
-	DOCKER_TAG=${DOCKER_TAG} \
 	tools/integration-test/run.sh
 
 # Simple helper to run the container with the flags to generate the new expected logs updated locally

@@ -96,7 +96,9 @@ RUN chmod 777 /fluent-bit/test/ /fluent-bit/test/logs && \
     useradd -u 8453 -m -s /bin/false couchbase
 USER 8453
 
-EXPOSE 2020
+ARG HTTP_PORT=2020
+ENV HTTP_PORT=$HTTP_PORT
+EXPOSE $HTTP_PORT
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 # Keep track of the versions we are using - not persisted between stages
@@ -111,7 +113,9 @@ FROM production
 RUN useradd -u 8453 -m -s /bin/false couchbase
 USER 8453
 
-EXPOSE 2020
+ARG HTTP_PORT=2020
+ENV HTTP_PORT=$HTTP_PORT
+EXPOSE $HTTP_PORT
 CMD ["/fluent-bit/bin/couchbase-watcher"]
 
 # Keep track of the versions we are using - not persisted between stages
@@ -119,6 +123,10 @@ ARG FLUENT_BIT_VER=1.8.7
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
+
+# Some support for Loki customisation but ensure we set defaults
+ENV LOKI_HOST=loki
+ENV LOKI_PORT=3100
 
 LABEL name="couchbase/fluent-bit" \
       vendor="Couchbase" \
