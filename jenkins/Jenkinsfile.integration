@@ -3,10 +3,10 @@ pipeline {
         label 'docker'
     }
     parameters {
-        string(name: 'server_image', defaultValue: 'couchbase/server:6.6.2', description: 'Version of Couchbase Server to test against')
+        string(name: 'server_image', defaultValue: 'couchbase/server:7.0.1', description: 'Version of Couchbase Server to test against')
     }
     environment {
-        GOVERSION = '1.16.3'
+        GOVERSION = '1.17.1'
         COMPOSEVERSION='1.29.2'
         PATH = "${env.WORKSPACE}/bin:${env.WORKSPACE}/go/bin:${PATH}"
     }

@@ -19,6 +19,7 @@ package couchbase
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -100,8 +101,10 @@ func (cw *WatcherConfig) GetWatchedFluentBitConfigDir() string {
 	return filepath.Clean(cw.fluentBitConfigDir)
 }
 
+const rebalanceDirPermissions fs.FileMode = 0700
+
 func (cw *WatcherConfig) CreateRebalanceDir() error {
-	err := os.Mkdir(cw.rebalanceOutputDir, 0700)
+	err := os.Mkdir(cw.rebalanceOutputDir, rebalanceDirPermissions)
 	if err != nil && !errors.Is(err, os.ErrExist) {
 		return fmt.Errorf("unable to create rebalance output directory %q: %w", cw.rebalanceOutputDir, err)
 	}
