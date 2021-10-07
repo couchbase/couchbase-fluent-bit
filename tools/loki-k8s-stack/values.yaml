@@ -4,7 +4,7 @@ cluster:
     server:
       enabled: true
       sidecar:
-        image: "couchbase/fluent-bit:v1"
+        image: "couchbase/fluent-bit:1.1.2"
   # Now add the custom labels
   servers:
     default:
@@ -12,7 +12,9 @@ cluster:
       pod:
         metadata:
           annotations:
-            fluentbit.couchbase.com/enable_output: "loki"
+            # Match all logs
+            fluentbit.couchbase.com/loki_match: "*"
+            # Send to this SVC
             fluentbit.couchbase.com/loki_host: loki.monitoring
       volumeMounts:
         default: couchbase

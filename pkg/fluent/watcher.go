@@ -42,31 +42,28 @@ const (
 )
 
 type Config struct {
-	cmd                                *exec.Cmd
-	mutex                              sync.Mutex
-	restartTimes                       int
-	timer                              *time.Timer
-	binPath, cfgPath, watchDir, cfgDir string
-	totalStarts                        int
-	cleanStop                          bool
-	cleanStart                         bool
-	extraOutputPlugins                 string
+	cmd                        *exec.Cmd
+	mutex                      sync.Mutex
+	restartTimes               int
+	timer                      *time.Timer
+	binPath, cfgPath, watchDir string
+	totalStarts                int
+	cleanStop                  bool
+	cleanStart                 bool
 }
 
-func NewFluentBitConfig(binary, config, watchDir, configDir, extraOutputPlugins string) *Config {
+func NewFluentBitConfig(binary, config, watchDir string) *Config {
 	fb := Config{
-		cmd:                nil,
-		restartTimes:       0,
-		mutex:              sync.Mutex{},
-		timer:              time.NewTimer(0),
-		binPath:            binary,
-		cfgPath:            config,
-		cfgDir:             configDir,
-		watchDir:           watchDir,
-		totalStarts:        0,
-		cleanStop:          false,
-		cleanStart:         false,
-		extraOutputPlugins: extraOutputPlugins,
+		cmd:          nil,
+		restartTimes: 0,
+		mutex:        sync.Mutex{},
+		timer:        time.NewTimer(0),
+		binPath:      binary,
+		cfgPath:      config,
+		watchDir:     watchDir,
+		totalStarts:  0,
+		cleanStop:    false,
+		cleanStart:   false,
 	}
 
 	return &fb
@@ -98,20 +95,15 @@ func Start(fb *Config) {
 		return
 	}
 
-	configFile, err := AddDynamicConfig(fb.cfgPath, fb.cfgDir, fb.extraOutputPlugins)
-	if err != nil {
-		log.Errorw("Unable to extend config", "error", err, "config", fb.cfgPath)
-	}
-
-	configContents, configErr := ioutil.ReadFile(configFile)
+	configContents, configErr := ioutil.ReadFile(fb.cfgPath)
 	if configErr != nil {
-		log.Errorw("Unable to retrieve Fluent bit config contents", "error", configErr, "config", fb.cfgPath, "actual.config", configFile)
+		log.Errorw("Unable to retrieve Fluent bit config contents", "error", configErr, "config", fb.cfgPath)
 	} else {
-		log.Infow("Starting Fluent Bit", "binary", fb.binPath, "config", fb.cfgPath, "actual.config", configFile, "contents", string(configContents))
+		log.Infow("Starting Fluent Bit", "binary", fb.binPath, "config", fb.cfgPath, "contents", string(configContents))
 	}
 
 	// #nosec G204
-	fb.cmd = exec.Command(fb.binPath, "-c", configFile)
+	fb.cmd = exec.Command(fb.binPath, "-c", fb.cfgPath)
 	// Pick up any customised environment loaded in as well
 	fb.cmd.Env = os.Environ()
 	fb.cmd.Stdout = os.Stdout
@@ -123,9 +115,9 @@ func Start(fb *Config) {
 
 	if err := fb.cmd.Start(); err != nil {
 		if configErr != nil {
-			log.Errorw("Start Fluent bit error", "error", err, "binary", fb.binPath, "config", fb.cfgPath, "actual.config", configFile, "configError", configErr)
+			log.Errorw("Start Fluent bit error", "error", err, "binary", fb.binPath, "config", fb.cfgPath, "configError", configErr)
 		} else {
-			log.Errorw("Start Fluent bit error", "error", err, "binary", fb.binPath, "config", fb.cfgPath, "actual.config", configFile, "contents", string(configContents))
+			log.Errorw("Start Fluent bit error", "error", err, "binary", fb.binPath, "config", fb.cfgPath, "contents", string(configContents))
 		}
 
 		fb.cmd = nil
@@ -134,7 +126,7 @@ func Start(fb *Config) {
 	}
 
 	fb.cleanStart = true
-	log.Infow("Fluent bit started", "binary", fb.binPath, "config", fb.cfgPath, "actual.config", configFile)
+	log.Infow("Fluent bit started", "binary", fb.binPath, "config", fb.cfgPath)
 }
 
 func Wait(fb *Config) {

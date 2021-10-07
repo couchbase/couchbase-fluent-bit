@@ -53,6 +53,19 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
 - role: worker
 - role: worker
 - role: worker
@@ -80,7 +93,21 @@ helm upgrade --install couchbase --namespace=couchbase --create-namespace couchb
 # All the configuration values are here: https://github.com/couchbase-partners/helm-charts/blob/master/charts/couchbase-operator/values.yaml
 # For more details refer to the official documentation: https://docs.couchbase.com/operator/current/helm-setup-guide.html
 
-# Wait for deployment to complete, the --wait flag does not work for this.
+# Set up ingress, based on the KIND documentation: https://kind.sigs.k8s.io/docs/user/ingress/
+INGRESS_VERSION=$(curl https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/stable.txt)
+kubectl apply -f "https://raw.githubusercontent.com/kubernetes/ingress-nginx/${INGRESS_VERSION}/deploy/static/provider/kind/deploy.yaml"
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+kubectl apply -f "${SCRIPT_DIR}/ingress.yaml"
+
+echo "Grafana login: http://localhost/grafana"
+echo "Credentials are "
+echo -n "admin:"
+kubectl get secret --namespace monitoring loki-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+# Wait for CB deployment to complete, the --wait flag does not work for this.
 echo "Waiting for CB to start up..."
 # The operator uses readiness gates to hold the containers until the cluster is actually ready to be used
 until [[ $(kubectl get pods --namespace=couchbase --field-selector=status.phase=Running --selector='app=couchbase' --no-headers 2>/dev/null |wc -l) -eq $SERVER_COUNT ]]; do
@@ -89,5 +116,5 @@ until [[ $(kubectl get pods --namespace=couchbase --field-selector=status.phase=
 done
 echo "CB configured and ready to go"
 
-kubectl get secret --namespace monitoring loki-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
-kubectl port-forward --namespace monitoring service/loki-grafana 3000:80
+# To just port-forward:
+# kubectl port-forward --namespace monitoring service/loki-grafana 3000:80

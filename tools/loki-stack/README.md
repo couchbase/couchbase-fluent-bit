@@ -130,7 +130,7 @@ The example provided with Docker Compose here in the repository automatically pr
 
 We now need to add Loki as a datasource at: http://localhost:3000/datasources. Set up the data source using the IP address of the Loki container and port 3100 as forwarded when we ran the container.
 
-### Custom configuration for log forwarding
+### Custom configuration for log forwarding (<1.1.2)
 
 Now we have Loki and Grafana configured correctly, let us create a new configuration for our log forwarder to send the logs to it. As part of our Couchbase Fluent Bit deployment we have broken up various sections of the configuration into reusable files to include so we can just use a two line [file](fluent-bit.conf) for this:
 
@@ -164,6 +164,16 @@ docker run --rm -d --name logger -v /tmp/couchbase-logs/:/opt/couchbase/var/lib/
 ```
 
 Notice we also run everything as a read-only mounted filesystem so we cannot modify anything in the container - the raw logs are not touched.
+
+### Sent to Loki (>=1.1.2)
+
+In the 1.1.2 release we introduced the option to send to Loki via environment variables only.
+
+```
+docker run --rm -d --name logger -v /tmp/couchbase-logs/:/opt/couchbase/var/lib/couchbase/logs/:ro -e COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs/ -e LOKI_MATCH="*" couchbase/fluent-bit:1.1.2
+```
+
+Or just run `docker-compose up` from this directory.
 
 ### Viewing logs
 

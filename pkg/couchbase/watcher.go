@@ -294,8 +294,6 @@ func CreateWatchers(cw WatcherConfig) (*run.Group, error) {
 		cw.GetFluentBitBinaryPath(),
 		cw.GetFluentBitConfigFilePath(),
 		cw.GetWatchedFluentBitConfigDir(),
-		cw.GetCouchbaseFluentBitConfigDir(),
-		cw.GetExtraOutputPlugins(),
 	)
 	if fb == nil {
 		return nil, ErrNoFluentBitConfig

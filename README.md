@@ -233,17 +233,17 @@ User-defined labels and annotations can be specified with CAO via the pod templa
 
 ### Output plugin dynamic enabling
 
-Output plugins can be dynamically added to the default configuration by the watcher using the `ENABLE_OUTPUT` environment variable.
-This is a comma-separated list of output plugin configuration to include, the value in the list is used to specify the full filename like so:
-<`COUCHBASE_FLUENT_BIT_CONFIG` variable value>/out-<`ENABLE_OUTPUT` value>.conf
-We first check that the specified file exists and if it does then we add an `@include` statement for the file to the end of the configuration dynamically prior to starting Fluent Bit.
-Changes in the watched configuration will then have the extra plugins re-applied automatically.
+By default we only output to standard output but other output plugins are included they just do not match any existing streams.
+It is possible to enable matching of streams to output plugins via the `<PLUGIN>_MATCH` environment variable.
+For example to enable sending all logs to Loki, set `LOKI_MATCH="*"`.
+Refer to the [default configuration](./conf/fluent-bit.conf) to see which output plugins are enabled.
+
 The major benefit of this for CAO deployments is we only need to have user-defined labels like so to set up Loki usage:
 ```
       pod:
         metadata:
           annotations:
-            fluentbit.couchbase.com/enable.output: "loki"
+            fluentbit.couchbase.com/loki.match: "*"
             fluentbit.couchbase.com/loki.host: loki.monitoring
 ```
 
@@ -303,7 +303,7 @@ For full details have a look at the diff of the tags and associated commits for 
 * main - in progress for next release (1.1.2)
   * Updated to Go 1.17.1 - this relates to the internal Watcher code layered on top of Fluent Bit.
   * Additional configuration variables now available for [Loki output and the HTTP server](https://issues.couchbase.com/browse/K8S-2354).
-  * New support for dynamically enabling output plugins via environment variables fed in from [Kubernetes labels or annotations](./tools/loki-k8s-stack/values.yaml).
+  * New support for enabling output plugins via environment variables fed in from [Kubernetes labels or annotations](./tools/loki-k8s-stack/values.yaml).
 * 1.1.1
   * Updated to Fluent Bit [1.8.7](https://www.fluentbit.io/announcements/v1.8.7/).
   * Updates to [support on-premise usage with rotated memcached logs](https://issues.couchbase.com/browse/K8S-2343).

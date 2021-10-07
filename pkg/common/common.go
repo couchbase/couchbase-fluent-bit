@@ -34,29 +34,22 @@ var (
 
 const (
 	// DynamicConfigEnvVar should only be used for testing.
-	DynamicConfigEnvVar            = "COUCHBASE_LOGS_DYNAMIC_CONFIG"
-	dynamicConfigDefault           = "/fluent-bit/config"
-	ConfigFileEnvVar               = "COUCHBASE_LOGS_CONFIG_FILE"
-	configFileDefault              = "fluent-bit.conf"
-	binaryEnvVar                   = "COUCHBASE_LOGS_BINARY"
-	binaryDefault                  = "/fluent-bit/bin/fluent-bit"
-	logsLocationEnvVar             = "COUCHBASE_LOGS"
-	logsLocationDefault            = "/opt/couchbase/var/lib/couchbase/logs/"
-	rebalanceLocationEnvVar        = "COUCHBASE_LOGS_REBALANCE_TEMPDIR"
-	rebalanceLocationDefault       = "/tmp/rebalance-logs"
-	CouchbaseFluentBitConfigEnvVar = "COUCHBASE_FLUENT_BIT_CONFIG"
-	fluentBitConfigDefault         = "/fluent-bit/etc/couchbase"
+	DynamicConfigEnvVar      = "COUCHBASE_LOGS_DYNAMIC_CONFIG"
+	dynamicConfigDefault     = "/fluent-bit/config"
+	ConfigFileEnvVar         = "COUCHBASE_LOGS_CONFIG_FILE"
+	configFileDefault        = "fluent-bit.conf"
+	binaryEnvVar             = "COUCHBASE_LOGS_BINARY"
+	binaryDefault            = "/fluent-bit/bin/fluent-bit"
+	logsLocationEnvVar       = "COUCHBASE_LOGS"
+	logsLocationDefault      = "/opt/couchbase/var/lib/couchbase/logs/"
+	rebalanceLocationEnvVar  = "COUCHBASE_LOGS_REBALANCE_TEMPDIR"
+	rebalanceLocationDefault = "/tmp/rebalance-logs"
 	// KubernetesConfigEnvVar should only be used for testing.
 	KubernetesConfigEnvVar  = "COUCHBASE_K8S_CONFIG_DIR"
 	kubernetesConfigDefault = "/etc/podinfo"
 	// Special handling for these annotations.
 	FluentBitAnnotationPrefix = "fluentbit.couchbase.com/"
-	EnableOutputEnvVar        = "ENABLE_OUTPUT"
 )
-
-func GetCouchbaseConfigDir() string {
-	return GetDirectory(fluentBitConfigDefault, CouchbaseFluentBitConfigEnvVar)
-}
 
 func GetDynamicConfigDir() string {
 	return GetDirectory(dynamicConfigDefault, DynamicConfigEnvVar)

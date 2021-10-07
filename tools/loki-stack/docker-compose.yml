@@ -29,9 +29,12 @@ services:
             - COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs
             - LOKI_HOST=loki
             - LOKI_PORT=3100
+            # Send all logs to Loki
+            - LOKI_MATCH=*
+            # Only send audit log to standard output
+            - STDOUT_MATCH=couchbase.log.audit
         volumes:
             - log-volume:/opt/couchbase/var/lib/couchbase/logs/:ro
-            - ./fluent-bit.conf:/fluent-bit/config/fluent-bit.conf:ro
         networks:
             - back
     loki:

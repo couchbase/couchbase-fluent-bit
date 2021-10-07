@@ -124,7 +124,11 @@ ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 
+# The default match we send to standard output
+ENV STDOUT_MATCH="couchbase.log.*"
+
 # Some support for Loki customisation but ensure we set defaults
+ENV LOKI_MATCH=no-match
 ENV LOKI_HOST=loki
 ENV LOKI_PORT=3100
 
