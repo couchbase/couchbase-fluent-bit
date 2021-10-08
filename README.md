@@ -213,10 +213,11 @@ This also supports a blog post showing how to do this in detail: https://blog.co
 | COUCHBASE_LOGS_DYNAMIC_CONFIG | The directory to watch for config changes and restart Fluent Bit. | /fluent-bit/config |
 | COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
 | COUCHBASE_K8S_CONFIG_DIR | The location where [DownwardAPI](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/) pushes pod meta-data to load as environment variables. | /etc/podinfo |
-| ENABLE_OUTPUT | A comma-separated list of extra output plugins to enable on top of the default configuration. | |
 | LOKI_HOST | The hostname used by the Loki output plugin (if enabled). | loki |
+| LOKI_MATCH | The set of matching streams to send to Loki. | no-match (prevents any) |
 | LOKI_PORT | The port used by the Loki output plugin (if enabled). | 3100 |
 | HTTP_PORT | The port used for the HTTP server run by Fluent Bit (enabled by default). | 2020 |
+| STD_MATCH | The set of matching streams to send to standard output. | couchbase.log.* |
 
 Be careful to make sure you have enough file descriptors configured to use this functionality, particularly for local development with something like Kubernetes-In-Docker(KIND).
 
@@ -286,7 +287,7 @@ CFB = Couchbase Fluent Bit
 |--------------|----------------|-------|-------|-------|-------|-------|-------|-------|--------------|
 | 2.2.0        |                | X     | X     | X     | X     | X     |       |       |              |
 | 2.2.1        |                | X     | X     | X     | X     | X     | X     | X     | X            |
-| Next (2.3.0) |                |       |       |       |       |       | X     | X     | X            |
+| Next (2.3.0) |                |       |       |       |       | X     | X     | X     | X            |
 
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
