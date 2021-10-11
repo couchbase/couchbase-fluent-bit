@@ -305,6 +305,7 @@ For full details have a look at the diff of the tags and associated commits for 
   * Updated to Go 1.17.1 - this relates to the internal Watcher code layered on top of Fluent Bit.
   * Additional configuration variables now available for [Loki output and the HTTP server](https://issues.couchbase.com/browse/K8S-2354).
   * New support for enabling output plugins via environment variables fed in from [Kubernetes labels or annotations](./tools/loki-k8s-stack/values.yaml).
+  * Updated to Fluent Bit [1.8.8](https://www.fluentbit.io/announcements/v1.8.8/).
 * 1.1.1
   * Updated to Fluent Bit [1.8.7](https://www.fluentbit.io/announcements/v1.8.7/).
   * Updates to [support on-premise usage with rotated memcached logs](https://issues.couchbase.com/browse/K8S-2343).

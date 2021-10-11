@@ -5,14 +5,14 @@ productVersion = $(version)-$(bldNum)
 ARTIFACTS = build/artifacts/
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=1.8.7
+FLUENT_BIT_VER=1.8.8
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
 # For testing
-SERVER_IMAGE = couchbase/server:7.0.0
+SERVER_IMAGE = couchbase/server:7.0.1
 
 # What exact revision is this?
 GIT_REVISION := $(shell git rev-parse HEAD)
