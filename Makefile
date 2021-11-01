@@ -12,7 +12,7 @@ DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
 # For testing
-SERVER_IMAGE = couchbase/server:7.0.1
+SERVER_IMAGE = couchbase/server:7.0.2
 
 # What exact revision is this?
 GIT_REVISION := $(shell git rev-parse HEAD)

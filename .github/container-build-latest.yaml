@@ -1,0 +1,57 @@
+# For running CICD testing for CAO, we need an image version to use for testing against.
+# This also provides an unsupported latest version for OSS users.
+name: Create unsupported image version for use during CI
+
+on:
+  push:
+    branches:
+      - 'main'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+      inputs:
+        ref:
+          description: Branch, tag, or commit SHA to run against.
+          required: false
+          default: main
+        tag:
+          description: Image version to use, specify the SHA if you want or similar to identify with. Make sure to clean up afterwards if not using the default.
+          required: false
+          default: latest
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.ref || 'main' }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.tag || 'latest' }}
