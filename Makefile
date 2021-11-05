@@ -5,7 +5,7 @@ productVersion = $(version)-$(bldNum)
 ARTIFACTS = build/artifacts/
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=1.8.8
+FLUENT_BIT_VER=1.8.9
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase

@@ -196,7 +196,7 @@ done
 
 # Run special test case
 if sh /fluent-bit/test/run-file-transfer-tests.sh; then
-    echo "PASSED: file transfer example"
+    echo "PASSED: file transfer example script"
 else
     echo "FAILED: file transfer example"
 fi
