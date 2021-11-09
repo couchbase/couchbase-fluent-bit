@@ -14,6 +14,9 @@
 # limitations under the License.
 set -eu
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Ensure we always have latest version
+docker pull koalaman/shellcheck:stable
+
 # Find all shell scripts that are not part of the Go local directory used during build.
 # Run Shellcheck on them.
 # Pruning is a lot more performant as it does not descend into the directory.

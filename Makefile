@@ -29,9 +29,9 @@ LDFLAGS = "-s -w -X github.com/couchbase/fluent-bit/pkg/version.version=$(versio
 # Hardcode version values for testing
 TEST_LDFLAGS = "-X github.com/couchbase/fluent-bit/pkg/version.version=1 -X github.com/couchbase/fluent-bit/pkg/version.revision=2 -X github.com/couchbase/fluent-bit/pkg/version.buildNumber=3 -X github.com/couchbase/fluent-bit/pkg/version.gitRevision=456"
 
-.PHONY: all build lint test-unit container container-rhel container-public container-lint container-scan container-rhel-checks container-rhel-tests dist test perf-test integration-test generate-logs test-dist container-clean clean
+.PHONY: all build lint test-unit container container-rhel container-public container-scan container-rhel-checks container-rhel-tests dist test perf-test integration-test generate-logs test-dist container-clean clean
 
-all: clean build lint test-unit container container-rhel container-lint container-scan container-rhel-checks test dist test-dist
+all: clean build lint test-unit container container-rhel container-scan container-rhel-checks test dist test-dist
 
 build: $(SOURCE) go.mod
 	for platform in linux darwin ; do \
@@ -58,6 +58,7 @@ lint:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./cmd/... ./pkg/...
 	tools/shellcheck.sh
 	tools/licence-lint.sh
+	tools/hadolint.sh
 
 test-unit:
 	go clean -testcache
@@ -76,10 +77,6 @@ container: build
 container-rhel: build
 	docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) -t ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} .
 	docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) --target test -t ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} .
-
-container-lint: build lint
-	docker run --rm -i hadolint/hadolint < Dockerfile
-	docker run --rm -i hadolint/hadolint < Dockerfile.rhel
 
 # RHEL base image fails Dive checks so just include for info and do not fail the build
 container-scan: container container-rhel
@@ -115,7 +112,7 @@ container-rhel-checks: container-scan
 container-rhel-tests: container-rhel
 	docker run --rm -e RUN_FLUENT_BIT_TESTS=yes ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}
 
-test: test-unit container container-rhel container-lint
+test: test-unit container container-rhel
 	docker run --rm ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
 	docker run --rm -u 1000 ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG}
 	docker run --rm ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG}

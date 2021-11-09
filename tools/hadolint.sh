@@ -12,23 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# Simple script to check all files have the appropriate copyright, will fail and list them if not.
 set -eu
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Ensure we always have latest version
+docker pull hadolint/hadolint
 
-exitCode=0
-while IFS= read -r -d '' SOURCE
-do
-    if ! head "${SOURCE}" | grep -q Copyright; then
-        echo ".${SOURCE##"$SCRIPT_DIR/.."}: Missing copyright"
-        exitCode=1
+# Find all Dockerfiles assuming a certain naming convention
+exit_code=0
+while IFS= read -r -d '' file; do
+    echo "Hadolint: .${file##"$SCRIPT_DIR/.."}"
+    if ! docker run --rm -i hadolint/hadolint < "$file"; then
+        exit_code=1
     fi
-    if ! head "${SOURCE}" | grep -q 'Apache License, Version 2.0'; then
-        echo ".${SOURCE##"$SCRIPT_DIR/.."}: Missing licence"
-        exitCode=1
-    fi
-done < <(find "${SCRIPT_DIR}/.." -type d -path "*/go" -prune -o -type f \( -name '*.go' -o -name '*.sh' \) -print0)
-# Make sure we prune out any local Go installation directory
+done < <(find "${SCRIPT_DIR}/.." -type d -path "*/go" -prune -o -type f -name '*dockerignore' -prune -o -type f -name 'Dockerfile*' -print0)
 
-exit $exitCode
+exit $exit_code

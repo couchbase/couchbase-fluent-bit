@@ -1,4 +1,6 @@
 FROM node:15.12
+# WORKDIR set in base image
+# hadolint ignore=DL3045
 COPY viewer.js .
 
 # Make sure to mount the logs you want to view here and pass as a parameter the one you want to view
