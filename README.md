@@ -283,11 +283,11 @@ Best efforts are made to confirm that custom configurations will work with vario
 CAO = Couchbase Autonomous Operator
 CFB = Couchbase Fluent Bit
 
-| CAO Version  | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 | 1.1.1 | Next (1.1.2) |
-|--------------|----------------|-------|-------|-------|-------|-------|-------|-------|--------------|
-| 2.2.0        |                | X     | X     | X     | X     | X     |       |       |              |
-| 2.2.1        |                | X     | X     | X     | X     | X     | X     | X     | X            |
-| Next (2.3.0) |                |       |       |       |       | X     | X     | X     | X            |
+| CAO Version  | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 | 1.1.1 | 1.1.2 | Next (1.1.3) |
+|--------------|----------------|-------|-------|-------|-------|-------|-------|-------|-------|--------------|
+| 2.2.0        |                | X     | X     | X     | X     | X     |       |       |       |              |
+| 2.2.1        |                | X     | X     | X     | X     | X     | X     | X     | X     | X            |
+| Next (2.3.0) |                |       |       |       |       | X     | X     | X     | X     | X            |
 
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
@@ -301,8 +301,10 @@ The branching strategy is to minimise any branches other than `main` following t
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
-* main
+* main - in progress for next relase (1.1.3)
   * Updated Fluent Bit to [1.8.9](https://fluentbit.io/announcements/v1.8.9/).
+  * Resolved issue where [Loki labels were being set incorrectly](https://issues.couchbase.com/browse/K8S-2530)
+  * Updated compatibility matrix
 * 1.1.2
   * Updated to Go 1.17.1 - this relates to the internal Watcher code layered on top of Fluent Bit.
   * Additional configuration variables now available for [Loki output and the HTTP server](https://issues.couchbase.com/browse/K8S-2354).
