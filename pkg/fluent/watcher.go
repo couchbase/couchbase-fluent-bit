@@ -95,6 +95,8 @@ func Start(fb *Config) {
 		return
 	}
 
+	common.CheckAndEnableMemoryBufLimits()
+
 	configContents, configErr := ioutil.ReadFile(fb.cfgPath)
 	if configErr != nil {
 		log.Errorw("Unable to retrieve Fluent bit config contents", "error", configErr, "config", fb.cfgPath)

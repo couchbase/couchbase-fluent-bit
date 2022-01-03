@@ -82,3 +82,63 @@ func TestLoadEnvironment(t *testing.T) {
 		}
 	}
 }
+func TestHandlesEnvMemBufLimits(t *testing.T) {
+	t.Parallel()
+	os.Setenv(common.ContainerLimitsMemEnvVar, "1000")
+	os.Setenv(common.MemBufLimitsEnabledEnvVar, "true")
+
+	var keys = [...]string{"MBL_AUDIT", "MBL_ERLANG", "MBL_EVENTING", "MBL_HTTP", "MBL_INDEX_PROJECTOR", "MBL_JAVA", "MBL_MEMCACHED", "MBL_PROMETHEUS", "MBL_REBALANCE", "MBL_XDCR"}
+
+	// test with audit enabled
+	var expected = "62MB"
+
+	os.Setenv(common.AuditEnabledEnvVar, "true")
+
+	os.Setenv(common.ConfigFileEnvVar, "../../test/test-fluent-bit.conf")
+
+	os.Setenv("STDOUT_MATCH", "*")
+	os.Setenv("ES_MATCH", "*")
+
+	common.CheckAndEnableMemoryBufLimits()
+
+	for _, key := range keys {
+		if os.Getenv(key) != expected {
+			t.Errorf("%q : %q != %q", key, os.Getenv(key), expected)
+		} else {
+			t.Logf("%q : %q - OK", key, expected)
+		}
+
+		os.Setenv(key, "")
+	}
+
+	// test with audit disabled
+	expected = "66MB"
+
+	os.Setenv(common.AuditEnabledEnvVar, "false")
+
+	common.CheckAndEnableMemoryBufLimits()
+
+	for _, key := range keys {
+		if os.Getenv(key) != expected {
+			t.Errorf("%q : %q != %q", key, os.Getenv(key), expected)
+		} else {
+			t.Logf("%q : %q - OK", key, expected)
+		}
+
+		os.Setenv(key, "")
+	}
+
+	// Test if no memory buffer limits exist to be set
+	os.Setenv(common.ConfigFileEnvVar, "../../test/example/test-fluent-bit-simple.conf")
+	common.CheckAndEnableMemoryBufLimits()
+
+	expected = "false"
+
+	for _, key := range keys {
+		if os.Getenv(key) != expected {
+			t.Errorf("%q : %q != %q", key, os.Getenv(key), expected)
+		} else {
+			t.Logf("%q : %q - OK", key, expected)
+		}
+	}
+}

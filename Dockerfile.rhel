@@ -89,6 +89,22 @@ ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
 
+# Disable mem buf limits for testing
+ENV	MBL_AUDIT "false"
+ENV	MBL_ERLANG "false"
+ENV	MBL_EVENTING "false"
+ENV	MBL_HTTP "false"
+ENV	MBL_INDEX_PROJECTOR "false"
+ENV	MBL_JAVA "false"
+ENV	MBL_MEMCACHED "false"
+ENV	MBL_PROMETHEUS "false"
+ENV	MBL_REBALANCE "false"
+ENV	MBL_XDCR "false"
+
+# Create folder for input plugin buffers
+RUN mkdir /tmp/buffers && \
+    chmod 1777 /tmp/buffers
+
 # Need to chmod for log & config output write access
 # Add user to run as
 RUN chmod 777 /fluent-bit/test/ /fluent-bit/test/logs && \

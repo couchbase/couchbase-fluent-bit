@@ -213,6 +213,7 @@ This also supports a blog post showing how to do this in detail: https://blog.co
 | COUCHBASE_LOGS_DYNAMIC_CONFIG | The directory to watch for config changes and restart Fluent Bit. | /fluent-bit/config |
 | COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
 | COUCHBASE_K8S_CONFIG_DIR | The location where [DownwardAPI](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/) pushes pod meta-data to load as environment variables. | /etc/podinfo |
+| MEM_BUF_LIMITS_ENABLED | Whether memory buffer limits should be enabled on the input plugins | false | 
 | LOKI_HOST | The hostname used by the Loki output plugin (if enabled). | loki |
 | LOKI_MATCH | The set of matching streams to send to Loki. | no-match (prevents any) |
 | LOKI_PORT | The port used by the Loki output plugin (if enabled). | 3100 |
@@ -241,6 +242,13 @@ In addition, any variables that start with the `fluentbit.couchbase.com/` have s
 `fluentbit.couchbase.com/loki_host: loki.monitoring` will therefore provide `LOKI_HOST=loki.monitoring`.
 
 User-defined labels and annotations can be specified with CAO via the pod template.
+
+### Memory buffer limits
+
+By default, memory buffer limits are disabled. However, it is possible to enable them by setting `MEM_BUF_LIMITS_ENABLED` to true. 
+When enabled the watcher will estimate the memory limits by using the total number of input and output plugins and using the 
+[estimating guide](https://docs.fluentbit.io/manual/administration/memory-management#estimating) from Fluent Bit.
+This can be useful in situtation where memory is restricted — for instances preventing the container from being OOMKilled in Kubernetes.
 
 ### Output plugin dynamic enabling
 

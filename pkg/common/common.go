@@ -17,10 +17,12 @@
 package common
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/couchbase/fluent-bit/pkg/logging"
@@ -44,12 +46,40 @@ const (
 	logsLocationDefault      = "/opt/couchbase/var/lib/couchbase/logs/"
 	rebalanceLocationEnvVar  = "COUCHBASE_LOGS_REBALANCE_TEMPDIR"
 	rebalanceLocationDefault = "/tmp/rebalance-logs"
+	bufferLocationEnvVar     = "STORAGE_BUFFER_PATH"
+	bufferLocationDefault    = "/tmp/buffer"
 	// KubernetesConfigEnvVar should only be used for testing.
 	KubernetesConfigEnvVar  = "COUCHBASE_K8S_CONFIG_DIR"
 	kubernetesConfigDefault = "/etc/podinfo"
 	// Special handling for these annotations.
 	FluentBitAnnotationPrefix = "fluentbit.couchbase.com/"
+	// Container limits.
+	ContainerLimitsMemEnvVar = "CONTAINER_LIMITS_MEMORY_MEGABYTES"
+	// Environment variable for if Audit logging is enabled.
+	AuditEnabledEnvVar = "AUDIT_ENABLED"
+	// Memory Buf limits enabled environment variable.
+	MemBufLimitsEnabledEnvVar = "MEM_BUF_LIMITS_ENABLED"
+	// Allowance for fluent bit memory estimation.
+	FluentBitMemoryMultiplier float32 = 1.2
 )
+
+// All default memory buffer limits.
+var memoryBufLimits = map[string]string{
+	"MBL_AUDIT":           "false",
+	"MBL_ERLANG":          "false",
+	"MBL_EVENTING":        "false",
+	"MBL_HTTP":            "false",
+	"MBL_INDEX_PROJECTOR": "false",
+	"MBL_JAVA":            "false",
+	"MBL_MEMCACHED":       "false",
+	"MBL_PROMETHEUS":      "false",
+	"MBL_REBALANCE":       "false",
+	"MBL_XDCR":            "false",
+}
+
+func GetStorageBufferDir() string {
+	return GetDirectory(bufferLocationDefault, bufferLocationEnvVar)
+}
 
 func GetDynamicConfigDir() string {
 	return GetDirectory(dynamicConfigDefault, DynamicConfigEnvVar)
@@ -83,6 +113,12 @@ func GetKubernetesConfigDir() string {
 	return GetDirectory(kubernetesConfigDefault, KubernetesConfigEnvVar)
 }
 
+func GetAuditEnabled() bool {
+	auditEnabled, _ := strconv.ParseBool(os.Getenv(AuditEnabledEnvVar))
+
+	return auditEnabled
+}
+
 // LoadEnvironment is responsible for pulling in any extra information about the environment from various configuration files.
 // This is to simplify usage across kubernetes and other deployments.
 func LoadEnvironment() {
@@ -102,8 +138,98 @@ func LoadEnvironment() {
 	// Support overriding via a file in the mounted directory directly:
 	_ = godotenv.Overload(filepath.Join(GetDynamicConfigDir(), "config.env"))
 
+	SetBufferDirectory()
+
 	log.Infow("Loaded environment files")
 	processCouchbaseAnnotations()
+}
+
+func setMemoryBufLimitDefaults() {
+	for k, v := range memoryBufLimits {
+		os.Setenv(k, v)
+	}
+}
+
+func SetBufferDirectory() {
+	// set where overflowed buffers should write to.
+	bufferDirectory := GetStorageBufferDir()
+	os.Setenv(bufferLocationEnvVar, bufferDirectory)
+}
+
+// memoryBufferLimitEnabled parses env variable `MEM_BUF_LIMITS_ENABLED`
+// returns truthy value or panics if it fails to parse.
+func memoryBufferLimitEnabled() bool {
+	memBuflimitEnabledEnvValue := os.Getenv(MemBufLimitsEnabledEnvVar)
+	if memBuflimitEnabledEnvValue != "" {
+		value, err := strconv.ParseBool(memBuflimitEnabledEnvValue)
+		if err != nil {
+			log.Fatalw("Failed to convert memory buffer limit var into bool", MemBufLimitsEnabledEnvVar, memBuflimitEnabledEnvValue)
+		}
+
+		return value
+	}
+
+	return false
+}
+
+// Sets memory buffer limits if enabled.
+func CheckAndEnableMemoryBufLimits() {
+	setMemoryBufLimitDefaults()
+
+	if memoryBufferLimitEnabled() {
+		updateMemoryBufLimits()
+	}
+}
+
+// updateDefaultMemoryBufLimits calculates the.
+func updateMemoryBufLimits() {
+	memoryLimit := os.Getenv(ContainerLimitsMemEnvVar)
+	if memoryLimit == "" {
+		setMemoryBufLimitDefaults()
+
+		return
+	}
+
+	memoryMB, err := strconv.Atoi(memoryLimit)
+
+	if err != nil {
+		log.Fatalw("Unable to convert environment memory limit to int", ContainerLimitsMemEnvVar, memoryLimit)
+	}
+
+	fbConfig, err := BuildConfigFile(GetConfigFile())
+	if err != nil {
+		log.Fatalw("Failed to parse fb config file", "error", err)
+	}
+
+	memBufConfig := CreateMemBufLimitConfig(fbConfig)
+
+	if memBufConfig.NumInputs == 0 && memBufConfig.NumOutputs == 0 {
+		log.Info("No input or output plugins found, not updating memory buffer limits")
+
+		return
+	}
+
+	if len(memBufConfig.MemBufLimitNames) == 0 {
+		log.Info("No ${MBL_*} variables found, not updating memory buffer limits")
+
+		return
+	}
+
+	perInputMemLimit := calculatePerInputMemoryLimit(memoryMB, memBufConfig.NumInputs, memBufConfig.NumOutputs)
+
+	megabyteString := fmt.Sprintf("%dMB", perInputMemLimit)
+	log.Info("Setting new memory buffer limits ", perInputMemLimit)
+
+	for _, k := range memBufConfig.MemBufLimitNames {
+		os.Setenv(k, megabyteString)
+	}
+}
+
+// https://docs.fluentbit.io/manual/v/1.0/configuration/memory_usage#estimating
+func calculatePerInputMemoryLimit(totalMemory, inputs, outputs int) int {
+	estimatedMemoryUsage := float32(inputs+2*outputs) * FluentBitMemoryMultiplier
+
+	return totalMemory / int(estimatedMemoryUsage)
 }
 
 // Some extra processing of specific "fluentbit.couchbase.com" annotations ones:

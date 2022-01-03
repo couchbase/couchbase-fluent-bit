@@ -15,6 +15,7 @@ require (
 require github.com/heroku/terrier v0.0.0-20200623122804-c3da2d1e1468
 
 require (
+	github.com/alecthomas/participle/v2 v2.0.0-alpha7
 	github.com/kr/text v0.2.0 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	go.uber.org/atomic v1.9.0 // indirect

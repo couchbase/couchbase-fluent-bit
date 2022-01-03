@@ -44,11 +44,27 @@ COPY test/ /fluent-bit/test/
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
 
+# Disable mem buf limits for testing
+ENV	MBL_AUDIT "false"
+ENV	MBL_ERLANG "false"
+ENV	MBL_EVENTING "false"
+ENV	MBL_HTTP "false"
+ENV	MBL_INDEX_PROJECTOR "false"
+ENV	MBL_JAVA "false"
+ENV	MBL_MEMCACHED "false"
+ENV	MBL_PROMETHEUS "false"
+ENV	MBL_REBALANCE "false"
+ENV	MBL_XDCR "false"
+
 # Use busybox so custom shell location, need to chmod for log output write access
 SHELL [ "/usr/local/bin/sh", "-c" ]
 RUN chmod 777 /fluent-bit/test/ && \
     chmod 777 /fluent-bit/test/logs && \
     chmod 777 /fluent-bit/etc/couchbase
+
+# Create folder for input plugin buffers
+RUN mkdir /tmp/buffers && \
+    chmod 1777 /tmp/buffers
 
 # Ensure we run as non-root by default
 COPY non-root.passwd /etc/passwd
