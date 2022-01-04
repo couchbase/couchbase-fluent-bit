@@ -27,7 +27,7 @@ jobs:
         shell: bash
 
       - id: fluent_linter_action
-        uses: calyptia/fluent-linter-action@main
+        uses: calyptia/fluent-linter-action@gg/problem-matcher-test
         with:
           CALYPTIA_API_KEY: ${{ secrets.CALYPTIA_API_KEY }}
           CONFIG_LOCATION_GLOB: '/tmp/output.conf'
