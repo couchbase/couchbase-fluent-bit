@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+    db1:
+        container_name: db1
+        image: ${SERVER_IMAGE}
+        ports:
+            - "8091-8096:8091-8096"
+            - "11210-11211:11210-11211"
+        volumes:
+            - log-volume:/opt/couchbase/var/lib/couchbase/logs/:rw
+            - ./configure-cbs.sh:/entrypoint.sh
+        networks:
+            back:
+                aliases:
+                    - couchbase1.compose.local
+    logging:
+        container_name: logging
+        image: ${FLUENT_BIT_IMAGE}
+        ports:
+            - 2020:2020
+        depends_on:
+            - db1
+            - splunk
+        environment:
+            - COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs
+            - SPLUNK_HOST=splunk
+            - SPLUNK_PORT=8088
+            - SPLUNK_TOKEN=${SPLUNK_TOKEN}
+            # Send all logs to Splunk
+            - SPLUNK_MATCH=*
+            # Only send audit log to standard output
+            - STDOUT_MATCH=couchbase.log.audit
+        volumes:
+            - log-volume:/opt/couchbase/var/lib/couchbase/logs/:ro
+        networks:
+            - back
+
+    splunk:
+        container_name: splunk
+        image: ${SPLUNK_IMAGE}
+        volumes: 
+            - ${PWD}/default.yml:/tmp/defaults/default.yml
+        environment:
+            - SPLUNK_START_ARGS=--accept-license
+            - SPLUNK_HEC_TOKEN=${SPLUNK_TOKEN}
+            - SPLUNK_PASSWORD=${SPLUNK_PASSWORD}
+        ports:
+            - 8000:8000
+            - 8088:8088
+        networks:
+            - back
+
+volumes:
+    log-volume:
+networks:
+    back:

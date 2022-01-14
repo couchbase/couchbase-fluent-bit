@@ -96,9 +96,11 @@ ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 ENV STDOUT_MATCH="couchbase.log.*"
 
 # Some support for Loki customisation but ensure we set defaults
-ENV LOKI_MATCH=no-match
-ENV LOKI_HOST=loki
-ENV LOKI_PORT=3100
+ENV LOKI_MATCH=no-match LOKI_HOST=loki LOKI_PORT=3100
+# Elasiticsearch defaults
+ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_HTTP_USER="" ES_HTTP_PASSWD=""
+# Splunk defaults
+ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match
 
 # Entry point - run our custom binary
 CMD ["/fluent-bit/bin/couchbase-watcher"]

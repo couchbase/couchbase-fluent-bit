@@ -216,6 +216,16 @@ This also supports a blog post showing how to do this in detail: https://blog.co
 | LOKI_HOST | The hostname used by the Loki output plugin (if enabled). | loki |
 | LOKI_MATCH | The set of matching streams to send to Loki. | no-match (prevents any) |
 | LOKI_PORT | The port used by the Loki output plugin (if enabled). | 3100 |
+| ES_HOST | The hostname used by the Elasticsearch output plugin (if enabled). | elasticsearch |
+| ES_MATCH| The set of matching streams to send to Elasticsearch. | no-match (prevents any) |
+| ES_PORT | The port used by the Elasticsearch output plugin (if enabled). | 9200 |
+| ES_INDEX | The index used by the Elasticsearch output plugin (if enabled). | "couchbase"
+| ES_HTTP_USER | The username for API access used by the Elasticsearch output plugin (if enabled). |
+| ES_HTTP_PASSWD | The password for the user defined by `ES_HTTP_USER` for the Elasticsearch output plugin (if enabled). |
+| SPLUNK_HOST | The hostname used by the Splunk output plugin (if enabled). | splunk |
+| SPLUNK_MATCH | The set of matching streams to send to Splunk http event collector. | no-match (prevents any) |
+| SPLUNK_PORT | The port used by the Splunk output plugin (if enabled). | 8088 |
+| SPLUNK_TOKEN | The token used by the Splunk output plugin (if enabled). | abcd1234 |
 | HTTP_PORT | The port used for the HTTP server run by Fluent Bit (enabled by default). | 2020 |
 | STD_MATCH | The set of matching streams to send to standard output. | couchbase.log.* |
 
@@ -305,6 +315,8 @@ For full details have a look at the diff of the tags and associated commits for 
   * Updated Fluent Bit to [1.8.9](https://fluentbit.io/announcements/v1.8.9/).
   * Resolved issue where [Loki labels were being set incorrectly](https://issues.couchbase.com/browse/K8S-2530)
   * Updated compatibility matrix
+  * Added in Elasticsearch and Splunk output plugins
+  * Changed output Record `couchbase.server` to `couchbase.server.server` to support Elasticsearch outputs
 * 1.1.2
   * Updated to Go 1.17.1 - this relates to the internal Watcher code layered on top of Fluent Bit.
   * Additional configuration variables now available for [Loki output and the HTTP server](https://issues.couchbase.com/browse/K8S-2354).

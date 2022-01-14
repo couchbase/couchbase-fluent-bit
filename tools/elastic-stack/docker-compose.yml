@@ -1,0 +1,95 @@
+version: "2.2"
+
+services:
+  setup:
+    image: ${ES_IMAGE}
+    user: "0"
+    command: >
+      bash -c '
+        echo "Waiting for Elasticsearch availability";
+        until curl -s  http://es01:9200 | grep -q "You Know, for Search"; do sleep 30; done;
+        echo "Setting timestamp mapping for Couchbase Index"
+        curl -s -X PUT -H "Content-Type: application/json" http://es01:9200/couchbase?pretty -d "{\"mappings\":{\"properties\":{\"timestamp\":{\"type\":\"date\",\"format\":\"dd/MMM/yyyy:HH:mm:ss Z||strict_date_optional_time||epoch_millis\"}}}}"
+        echo "All done!";
+      '
+  es01:
+    image: ${ES_IMAGE}
+    volumes:
+      - esdata01:/usr/share/elasticsearch/data
+    ports:
+      - ${ES_PORT}:9200
+    environment:
+      - xpack.security.enabled=false
+      - discovery.type=single-node
+      - node.name=es01
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s http://localhost:9200 | grep -q 'You Know, for Search'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  kibana:
+    depends_on:
+      - es01
+    image: ${KIB_IMAGE}
+    volumes:
+      - kibanadata:/usr/share/kibana/data
+    ports:
+      - ${KIBANA_PORT}:5601
+    environment:
+      - SERVERNAME=kibana
+      - ELASTICSEARCH_HOSTS=http://es01:9200
+    mem_limit: ${MEM_LIMIT}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+  db1:
+      container_name: db1
+      image: ${SERVER_IMAGE}
+      ports:
+          - "8091-8096:8091-8096"
+          - "11210-11211:11210-11211"
+      volumes:
+          - log-volume:/opt/couchbase/var/lib/couchbase/logs/:rw
+          - ./configure-cbs.sh:/entrypoint.sh
+  logging:
+      container_name: logging
+      image: ${FLUENT_BIT_IMAGE}
+      ports:
+          - 2020:2020
+      depends_on:
+          setup:
+            condition: service_completed_successfully
+      environment:
+          - COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs
+          - ES_HOST=es01
+          - ES_PORT=9200
+          # Send all logs to elasticsearch
+          - ES_MATCH=*
+          # Only send audit log to standard output
+          - STDOUT_MATCH=couchbase.log.audit
+      volumes:
+          - log-volume:/opt/couchbase/var/lib/couchbase/logs/:ro
+
+volumes:
+  esdata01:
+    driver: local
+  kibanadata:
+    driver: local
+  log-volume:
+    driver: local

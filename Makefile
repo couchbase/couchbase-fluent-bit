@@ -4,6 +4,8 @@ version = $(if $(VERSION),$(VERSION),1.1.1)
 productVersion = $(version)-$(bldNum)
 ARTIFACTS = build/artifacts/
 
+TRIVY_TAG=0.23.0
+
 # Easily test builds for new versions with no code changes
 FLUENT_BIT_VER=1.8.9
 
@@ -81,10 +83,10 @@ container-rhel: build
 # RHEL base image fails Dive checks so just include for info and do not fail the build
 container-scan: container container-rhel
 	docker inspect ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} --format '{{.Config.User}}' | grep -q "8453"
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
-		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy \
-		--severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
+		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
+		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \
 		${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \

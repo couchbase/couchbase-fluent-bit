@@ -1,0 +1,8 @@
+---
+splunk:
+  hec:
+    cert: null
+    enable: true
+    password: null
+    port: 8088
+    ssl: false
