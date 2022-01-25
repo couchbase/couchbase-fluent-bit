@@ -25,9 +25,9 @@ COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
-COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
-# Add our custom redaction script
-COPY redaction/redaction.lua /fluent-bit/etc/
+COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
+# Add our custom lua scripts
+COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
 ARG FLUENT_BIT_VER=1.8.9
@@ -36,9 +36,14 @@ ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
-COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
+COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
+
+# Add our custom lua scripts
+COPY lua/*.lua /fluent-bit/etc/
 # Add test cases (need write permissions as well for logs)
 COPY test/ /fluent-bit/test/
+# Copy over the log differ binary
+COPY bin/linux/log-differ /bin/log-differ
 
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
@@ -58,6 +63,7 @@ ENV	MBL_XDCR "false"
 
 # Use busybox so custom shell location, need to chmod for log output write access
 SHELL [ "/usr/local/bin/sh", "-c" ]
+
 RUN chmod 777 /fluent-bit/test/ && \
     chmod 777 /fluent-bit/test/logs && \
     chmod 777 /fluent-bit/etc/couchbase

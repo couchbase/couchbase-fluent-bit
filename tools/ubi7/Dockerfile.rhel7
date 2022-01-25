@@ -28,8 +28,8 @@ ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
-COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
-COPY redaction/redaction.lua /fluent-bit/etc/
+COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
+COPY lua/*.lua /fluent-bit/etc/
 
 FROM production as test
 ENV COUCHBASE_LOGS_BINARY /opt/td-agent-bit/bin/td-agent-bit

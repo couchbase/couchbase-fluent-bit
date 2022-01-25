@@ -8,6 +8,7 @@
 !bin/
 !conf/
 !redaction/
+!lua/
 !non-root.passwd
 # Everything in test except actuals and output
 !test/

@@ -66,13 +66,14 @@ VOLUME /fluent-bit/config
 ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
-COPY redaction/sha1/ /usr/local/share/lua/5.1/sha1/
-COPY redaction/redaction.lua /fluent-bit/etc/
+COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
+COPY lua/*.lua /fluent-bit/etc/
 
 # Try to hide some of the RHEL wastage
 FROM production as test
 RUN microdnf update && microdnf install -y findutils diffutils && microdnf clean all
 
+COPY bin/linux/log-differ /bin/log-differ
 # Add unit tests from Fluent Bit so we can run
 COPY --from=builder /tmp/src/build/bin/flb-* /fluent-bit/test/bin/
 # We need test config & other data

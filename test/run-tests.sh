@@ -45,6 +45,8 @@ RUN_FLUENT_BIT_TESTS=${RUN_FLUENT_BIT_TESTS:-no}
 # Time in seconds before we end a fluent bit test case, mainly to prevent build stalling.
 FLUENT_BIT_TEST_TIMEOUT=${FLUENT_BIT_TEST_TIMEOUT:-600}
 
+export POD_NAMESPACE=default
+export couchbase_node=cb-node
 # Document settings and echo them together so we can see them in output
 echo "COUCHBASE_LOGS_BINARY set to ${COUCHBASE_LOGS_BINARY} - using as fluent bit binary"
 echo "COUCHBASE_LOGS set to ${COUCHBASE_LOGS} - put all log files here and expected output"
@@ -224,7 +226,9 @@ for i in "${COUCHBASE_LOGS}"/*.expected; do
         sed -i 's/actual: \[.*\, {/actual: \[__IGNORED__, {/g' "$expected"
     fi
 
-    if diff -a -q "${actual}" "${expected}"; then
+    if log-differ "${actual}" "${expected}"; then
+        echo "PASSED: No differences found in $actual and $expected"
+    elif diff -a "${actual}" "${expected}"; then
         echo "PASSED: No differences found in $actual and $expected"
     else
         echo "FAILED: Differences found between $actual and $expected"

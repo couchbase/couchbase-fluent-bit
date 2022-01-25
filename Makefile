@@ -45,14 +45,16 @@ build: $(SOURCE) go.mod
 	for platform in linux darwin ; do \
 	  echo "Building $$platform binary" ; \
 	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher ./cmd ; \
+	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/log-differ ./tools/log-differ.go ; \
 	done
 
 image-artifacts: build
 	mkdir -p $(ARTIFACTS)/bin/linux
 	cp bin/linux/couchbase-watcher $(ARTIFACTS)/bin/linux
+	cp bin/linux/log-differ $(ARTIFACTS)/bin/linux
 	cp Dockerfile* LICENSE README.md $(ARTIFACTS)
 	cp non-root.passwd $(ARTIFACTS)
-	cp -rv conf licenses redaction test $(ARTIFACTS)
+	cp -rv conf licenses lua test $(ARTIFACTS)
 
 # This target (and only this target) is invoked by the production build job.
 # This job will archive all files that end up in the dist/ directory.

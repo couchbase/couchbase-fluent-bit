@@ -23,7 +23,7 @@ OUTPUT_LOGS_DIR=${OUTPUT_LOGS_DIR:-${SCRIPT_DIR}/../test/logs}
 rm -f "${OUTPUT_LOGS_DIR}/*.actual"
 rm -rf "${OUTPUT_LOGS_DIR}/rebalance-logs/"
 # This may fail but can be ignored
-docker run --rm -v "${OUTPUT_LOGS_DIR}/":/fluent-bit/test/logs/ -e COUCHBASE_LOGS=/fluent-bit/test/logs "${TEST_CONTAINER}"
+docker run -u 1000 --rm -v "${OUTPUT_LOGS_DIR}/":/fluent-bit/test/logs/ -e COUCHBASE_LOGS=/fluent-bit/test/logs "${TEST_CONTAINER}"
 
 rm -rf "${OUTPUT_LOGS_DIR}/rebalance-logs/"
 
