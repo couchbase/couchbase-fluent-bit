@@ -4,6 +4,12 @@ version = $(if $(VERSION),$(VERSION),1.1.1)
 productVersion = $(version)-$(bldNum)
 ARTIFACTS = build/artifacts/
 
+# External go tools configuration.
+# We install these when used, so they override things other builds have done
+# and also avoid scruitiny from scanners.
+GOPATH := $(shell go env GOPATH)
+GOBIN := $(if $(GOPATH),$(GOPATH)/bin,$(HOME)/go/bin)
+GOLINT_VERSION := v1.42.1
 TRIVY_TAG=0.23.0
 
 # Easily test builds for new versions with no code changes
@@ -57,7 +63,8 @@ dist: image-artifacts
 	rm -rf $(ARTIFACTS)
 
 lint:
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./cmd/... ./pkg/...
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VERSION)
+	$(GOBIN)/golangci-lint run ./cmd/... ./pkg/...
 	tools/shellcheck.sh
 	tools/licence-lint.sh
 	tools/hadolint.sh
