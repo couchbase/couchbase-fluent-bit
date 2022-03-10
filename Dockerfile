@@ -1,6 +1,6 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
 # Have to use a fixed base image for the build framework
-ARG FLUENT_BIT_VER=1.8.9
+ARG FLUENT_BIT_VER=1.8.13
 FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
@@ -30,7 +30,7 @@ COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=1.8.9
+ARG FLUENT_BIT_VER=1.8.13
 FROM fluent/fluent-bit:$FLUENT_BIT_VER-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -62,7 +62,6 @@ ENV	MBL_REBALANCE "false"
 ENV	MBL_XDCR "false"
 
 # Use busybox so custom shell location, need to chmod for log output write access
-SHELL [ "/usr/local/bin/sh", "-c" ]
 
 RUN chmod 777 /fluent-bit/test/ && \
     chmod 777 /fluent-bit/test/logs && \
@@ -82,7 +81,7 @@ ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.9
+ARG FLUENT_BIT_VER=1.8.13
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -90,7 +89,7 @@ ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 # Wrap our test cases in a script that supports checking for errors and then using an exit code directly
 # https://github.com/fluent/fluent-bit/issues/3268
 # It can also run all test cases in one go then rather than have to list them all individually
-CMD ["sh", "/fluent-bit/test/run-tests.sh"]
+CMD ["/fluent-bit/test/run-tests.sh"]
 
 # We need an un-targeted build stage to support the build pipeline
 FROM production
@@ -109,7 +108,7 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.9
+ARG FLUENT_BIT_VER=1.8.13
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION

@@ -320,7 +320,7 @@ A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 
 * main - in progress for next relase (1.1.3)
-  * Updated Fluent Bit to [1.8.9](https://fluentbit.io/announcements/v1.8.9/).
+  * Updated Fluent Bit to [1.8.13](https://fluentbit.io/announcements/v1.8.13/).
   * Resolved issue where [Loki labels were being set incorrectly](https://issues.couchbase.com/browse/K8S-2530)
   * Updated compatibility matrix
   * Added in Elasticsearch and Splunk output plugins

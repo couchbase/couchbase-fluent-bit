@@ -19,7 +19,6 @@ package main
 import (
 	"bufio"
 	"flag"
-	"fmt"
 	"os"
 	"regexp"
 
@@ -110,11 +109,8 @@ func main() {
 		}
 	}
 	if len(diffs) != 0 {
-		for _, v := range diffs {
-			v.Render()
-		}
 		os.Exit(1)
 	}
-	fmt.Println("No differences found")
+
 	os.Exit(0)
 }

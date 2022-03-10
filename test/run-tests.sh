@@ -88,6 +88,9 @@ fi
 for i in /fluent-bit/etc/fluent*.conf; do
     # Ignore invalid/non-files
     [[ ! -f "$i" ]] && continue
+    if [[ "$i" = "/fluent-bit/etc/fluent-bit-win32.conf" ]]; then
+        continue
+    fi
     if "${COUCHBASE_LOGS_BINARY}" --dry-run --config="$i"; then
         echo "PASSED: ${COUCHBASE_LOGS_BINARY} --dry-run --config=$i"
     else
@@ -228,7 +231,7 @@ for i in "${COUCHBASE_LOGS}"/*.expected; do
 
     if log-differ "${actual}" "${expected}"; then
         echo "PASSED: No differences found in $actual and $expected"
-    elif diff -a "${actual}" "${expected}"; then
+    elif diff -a -q "${actual}" "${expected}"; then
         echo "PASSED: No differences found in $actual and $expected"
     else
         echo "FAILED: Differences found between $actual and $expected"

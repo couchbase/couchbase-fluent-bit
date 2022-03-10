@@ -13,7 +13,7 @@ GOLINT_VERSION := v1.42.1
 TRIVY_TAG=0.23.0
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=1.8.9
+FLUENT_BIT_VER=1.8.13
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
@@ -82,12 +82,12 @@ test-unit:
 # need to be moved to a separate repo in which case the "docker build" command
 # can't be here anyway.
 container: build
-	docker build -f Dockerfile --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) -t ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} .
-	docker build -f Dockerfile --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) --target test -t ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) -t ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg PROD_VERSION=$(version) --target test -t ${DOCKER_USER}/fluent-bit-test:${DOCKER_TAG} .
 
 container-rhel: build
-	docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) -t ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} .
-	docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) --target test -t ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) -t ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} .
+	DOCKER_BUILDKIT=1 docker build -f Dockerfile.rhel --build-arg FLUENT_BIT_VER=${FLUENT_BIT_VER} --build-arg OPERATOR_BUILD=$(OPERATOR_BUILD) --build-arg OS_BUILD=$(BUILD) --build-arg PROD_VERSION=$(version) --target test -t ${DOCKER_USER}/fluent-bit-test-rhel:${DOCKER_TAG} .
 
 # RHEL base image fails Dive checks so just include for info and do not fail the build
 container-scan: container container-rhel
@@ -154,8 +154,8 @@ test-dist: dist
 	rm -rf test-dist/
 	mkdir -p test-dist/
 	tar -xzvf dist/couchbase-fluent-bit-image_$(productVersion).tgz -C test-dist/
-	docker build -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
-	docker build -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
+	DOCKER_BUILDKIT=1 docker build -f test-dist/Dockerfile test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist:${DOCKER_TAG}
+	DOCKER_BUILDKIT=1 docker build -f test-dist/Dockerfile.rhel test-dist/ -t ${DOCKER_USER}/fluent-bit-test-dist-rhel:${DOCKER_TAG}
 
 # Remove our images then remove dangling ones to prevent any caching
 container-clean:
