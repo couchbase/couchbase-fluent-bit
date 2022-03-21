@@ -1,6 +1,6 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
 # Have to use a fixed base image for the build framework
-ARG FLUENT_BIT_VER=1.8.13
+ARG FLUENT_BIT_VER=1.8.14
 FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
@@ -30,7 +30,7 @@ COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=1.8.13
+ARG FLUENT_BIT_VER=1.8.14
 FROM fluent/fluent-bit:$FLUENT_BIT_VER-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -81,7 +81,7 @@ ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.13
+ARG FLUENT_BIT_VER=1.8.14
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -108,7 +108,7 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.13
+ARG FLUENT_BIT_VER=1.8.14
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION

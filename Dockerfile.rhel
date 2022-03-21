@@ -2,7 +2,7 @@ FROM registry.access.redhat.com/ubi8/ubi:8.4 as builder
 # hadolint ignore=DL3041
 RUN dnf update -y && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip && dnf clean all
 
-ARG FLUENT_BIT_VER=1.8.13
+ARG FLUENT_BIT_VER=1.8.14
 ADD https://github.com/fluent/fluent-bit/archive/refs/tags/v${FLUENT_BIT_VER}.zip /source.zip
 RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src \
       && unzip /source.zip -d /tmp/src && mv /tmp/src/fluent-bit-*/* /tmp/src/ \
@@ -48,7 +48,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4 as production
 LABEL description="Couchbase Fluent Bit image with support for config reload, pre-processing and redaction" vendor="Couchbase" maintainer="docker@couchbase.com"
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.
-RUN microdnf update && microdnf install -y openssl libpq systemd-libs shadow-utils && microdnf clean all
+RUN microdnf update && microdnf install -y libpq-13.3-1.el8_4 && microdnf clean all
 
 # Ensure we add licensing and help information for certification requirements
 COPY licenses/* /licenses/
@@ -71,7 +71,7 @@ COPY lua/*.lua /fluent-bit/etc/
 
 # Try to hide some of the RHEL wastage
 FROM production as test
-RUN microdnf update && microdnf install -y findutils diffutils && microdnf clean all
+RUN microdnf update && microdnf install -y findutils-1:4.6.0-20.el8 && microdnf clean all
 
 COPY bin/linux/log-differ /bin/log-differ
 # Add unit tests from Fluent Bit so we can run
@@ -119,7 +119,7 @@ EXPOSE $HTTP_PORT
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.13
+ARG FLUENT_BIT_VER=1.8.14
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -136,7 +136,7 @@ EXPOSE $HTTP_PORT
 CMD ["/fluent-bit/bin/couchbase-watcher"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.13
+ARG FLUENT_BIT_VER=1.8.14
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
