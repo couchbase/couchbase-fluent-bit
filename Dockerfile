@@ -1,7 +1,12 @@
 # Intermediate image used as a pre-cursor to testing and the final released image
 # Have to use a fixed base image for the build framework
 ARG FLUENT_BIT_VER=1.8.14
-FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
+FROM fluent/fluent-bit:$FLUENT_BIT_VER as builder
+
+# hadolint ignore=DL3006
+FROM gcr.io/distroless/cc-debian11 as production
+ARG FLUENT_BIT_VER=1.8.14
+COPY --from=builder /fluent-bit /
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 

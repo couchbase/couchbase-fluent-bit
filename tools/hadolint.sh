@@ -21,7 +21,7 @@ docker pull hadolint/hadolint
 exit_code=0
 while IFS= read -r -d '' file; do
     echo "Hadolint: .${file##"$SCRIPT_DIR/.."}"
-    if ! docker run --rm -i hadolint/hadolint < "$file"; then
+    if ! docker run --rm -e "HADOLINT_IGNORE=DL3008" -i hadolint/hadolint < "$file"; then
         exit_code=1
     fi
 done < <(find "${SCRIPT_DIR}/.." -type d -path "*/go" -prune -o -type f -name '*dockerignore' -prune -o -type f -name 'Dockerfile*' -print0)

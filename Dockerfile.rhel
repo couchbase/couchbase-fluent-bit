@@ -48,7 +48,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4 as production
 LABEL description="Couchbase Fluent Bit image with support for config reload, pre-processing and redaction" vendor="Couchbase" maintainer="docker@couchbase.com"
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.
-RUN microdnf update && microdnf install -y libpq-13.3-1.el8_4 && microdnf clean all
+RUN microdnf update && microdnf install -y libpq-13.* && microdnf clean all
 
 # Ensure we add licensing and help information for certification requirements
 COPY licenses/* /licenses/
