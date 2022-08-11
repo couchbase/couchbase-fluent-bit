@@ -96,7 +96,7 @@ container-scan: container container-rhel
 		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
 		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \
+	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \
 		${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \
 		${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}

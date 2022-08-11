@@ -71,7 +71,7 @@ COPY lua/*.lua /fluent-bit/etc/
 
 # Try to hide some of the RHEL wastage
 FROM production as test
-RUN microdnf update && microdnf install -y findutils-1:4.6.0-20.el8 && microdnf clean all
+RUN microdnf update && microdnf install -y findutils-1:4.* && microdnf clean all
 
 COPY bin/linux/log-differ /bin/log-differ
 # Add unit tests from Fluent Bit so we can run

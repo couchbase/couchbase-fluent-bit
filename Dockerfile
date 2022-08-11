@@ -1,12 +1,63 @@
+ARG FLUENT_BIT_VER=1.8.14
+FROM debian:bullseye-slim as deb-extractor
+# We download all debs locally then extract them into a directory we can use as the root for distroless.
+# We also include some extra handling for the status files that some tooling uses for scanning, etc.
+WORKDIR /tmp
+#hadolint ignore=DL4006,SC2086
+RUN apt-get update && \
+    apt-get download \
+        libssl1.1 \
+        libsasl2-2 \
+        pkg-config \
+        libpq5 \
+        libsystemd0 \
+        zlib1g \
+        ca-certificates \
+        libatomic1 \
+        libgcrypt20 \
+        libzstd1 \
+        liblz4-1 \
+        libgssapi-krb5-2 \
+        libldap-2.4-2 \
+        libgpg-error0 \
+        libkrb5-3 \
+        libk5crypto3 \
+        libcom-err2 \
+        libkrb5support0 \
+        libgnutls30 \
+        libkeyutils1 \
+        libp11-kit0 \
+        libidn2-0 \
+        libunistring2 \
+        libtasn1-6 \
+        libnettle8 \
+        libhogweed6 \
+        libgmp10 \
+        libffi7 \
+        liblzma5 \
+        libyaml-0-2 && \
+    mkdir -p /dpkg/var/lib/dpkg/status.d/ && \
+    for deb in *.deb; do \
+        package_name=$(dpkg-deb -I ${deb} | awk '/^ Package: .*$/ {print $2}'); \
+        echo "Processing: ${package_name}"; \
+        dpkg --ctrl-tarfile $deb | tar -Oxf - ./control > /dpkg/var/lib/dpkg/status.d/${package_name}; \
+        dpkg --extract $deb /dpkg || exit 10; \
+    done
+
+# Remove unnecessary files extracted from deb packages like man pages and docs etc.
+RUN find /dpkg/ -type d -empty -delete && \
+    rm -r /dpkg/usr/share/doc/
+
 # Intermediate image used as a pre-cursor to testing and the final released image
 # Have to use a fixed base image for the build framework
 ARG FLUENT_BIT_VER=1.8.14
 FROM fluent/fluent-bit:$FLUENT_BIT_VER as builder
 
-# hadolint ignore=DL3006
+#hadolint ignore=DL3006
 FROM gcr.io/distroless/cc-debian11 as production
-ARG FLUENT_BIT_VER=1.8.14
-COPY --from=builder /fluent-bit /
+
+COPY --from=deb-extractor /dpkg /
+COPY --from=builder /fluent-bit /fluent-bit
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -36,7 +87,7 @@ COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
 ARG FLUENT_BIT_VER=1.8.14
-FROM fluent/fluent-bit:$FLUENT_BIT_VER-debug as test
+FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
