@@ -1,8 +1,8 @@
 FROM registry.access.redhat.com/ubi8/ubi:8.4 as builder
 # hadolint ignore=DL3041
-RUN dnf update -y && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip && dnf clean all
+RUN dnf update -y && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip libyaml-devel && dnf clean all
 
-ARG FLUENT_BIT_VER=1.8.14
+ARG FLUENT_BIT_VER=1.9.7
 ADD https://github.com/fluent/fluent-bit/archive/refs/tags/v${FLUENT_BIT_VER}.zip /source.zip
 RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src \
       && unzip /source.zip -d /tmp/src && mv /tmp/src/fluent-bit-*/* /tmp/src/ \
@@ -91,16 +91,13 @@ ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
 
 # Disable mem buf limits for testing
-ENV	MBL_AUDIT "false"
-ENV	MBL_ERLANG "false"
-ENV	MBL_EVENTING "false"
-ENV	MBL_HTTP "false"
-ENV	MBL_INDEX_PROJECTOR "false"
-ENV	MBL_JAVA "false"
-ENV	MBL_MEMCACHED "false"
-ENV	MBL_PROMETHEUS "false"
-ENV	MBL_REBALANCE "false"
-ENV	MBL_XDCR "false"
+ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+# Kubernetes defaults
+ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
+# Couchbase defaults
+ENV couchbase_cluster=unknown operator.couchbase.com/version=unknown server.couchbase.com/version=unknown couchbase_node=unknown couchbase_node_conf=unknown couchbase_server=unknown
+# Service label defaults to false
+ENV couchbase_service_analytics=false couchbase_service_data=false couchbase_service_eventing=false couchbase_service_index=false couchbase_service_query=false couchbase_service_search=false
 
 # Create folder for input plugin buffers
 RUN mkdir /tmp/buffers && \
@@ -119,7 +116,7 @@ EXPOSE $HTTP_PORT
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.14
+ARG FLUENT_BIT_VER=1.9.7
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -136,7 +133,7 @@ EXPOSE $HTTP_PORT
 CMD ["/fluent-bit/bin/couchbase-watcher"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.14
+ARG FLUENT_BIT_VER=1.9.7
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -150,6 +147,15 @@ ENV LOKI_MATCH=no-match LOKI_HOST=loki LOKI_PORT=3100
 ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_HTTP_USER="" ES_HTTP_PASSWD=""
 # Splunk defaults
 ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match
+
+# Disable mem buf limits by default
+ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+# Kubernetes defaults
+ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
+# Couchbase defaults
+ENV couchbase_cluster=unknown operator.couchbase.com/version=unknown server.couchbase.com/version=unknown couchbase_node=unknown couchbase_node_conf=unknown couchbase_server=unknown
+# Service label defaults to false
+ENV couchbase_service_analytics=false couchbase_service_data=false couchbase_service_eventing=false couchbase_service_index=false couchbase_service_query=false couchbase_service_search=false
 
 LABEL name="couchbase/fluent-bit" \
       vendor="Couchbase" \

@@ -175,6 +175,7 @@ for i in /fluent-bit/etc/couchbase/in-*.conf; do
 
     testConfig="$i.test-conf"
     testLog="$i.log"
+    contents=$(cat "$i")
     cat > "$testConfig" << __FB_EOF
 @include /fluent-bit/test/conf/test-service.conf
 
@@ -182,7 +183,7 @@ for i in /fluent-bit/etc/couchbase/in-*.conf; do
 # We cannot exit when done as this then pauses the rest of the pipeline so leads to a race getting chunks out.
 # https://github.com/fluent/fluent-bit/issues/3274
 # Instead we rely on a timeout ending the test case.
-@include $i
+$contents
     Read_from_head On
 
 @include /fluent-bit/test/conf/test-filters.conf

@@ -1,63 +1,5 @@
-ARG FLUENT_BIT_VER=1.8.14
-FROM debian:bullseye-slim as deb-extractor
-# We download all debs locally then extract them into a directory we can use as the root for distroless.
-# We also include some extra handling for the status files that some tooling uses for scanning, etc.
-WORKDIR /tmp
-#hadolint ignore=DL4006,SC2086
-RUN apt-get update && \
-    apt-get download \
-        libssl1.1 \
-        libsasl2-2 \
-        pkg-config \
-        libpq5 \
-        libsystemd0 \
-        zlib1g \
-        ca-certificates \
-        libatomic1 \
-        libgcrypt20 \
-        libzstd1 \
-        liblz4-1 \
-        libgssapi-krb5-2 \
-        libldap-2.4-2 \
-        libgpg-error0 \
-        libkrb5-3 \
-        libk5crypto3 \
-        libcom-err2 \
-        libkrb5support0 \
-        libgnutls30 \
-        libkeyutils1 \
-        libp11-kit0 \
-        libidn2-0 \
-        libunistring2 \
-        libtasn1-6 \
-        libnettle8 \
-        libhogweed6 \
-        libgmp10 \
-        libffi7 \
-        liblzma5 \
-        libyaml-0-2 && \
-    mkdir -p /dpkg/var/lib/dpkg/status.d/ && \
-    for deb in *.deb; do \
-        package_name=$(dpkg-deb -I ${deb} | awk '/^ Package: .*$/ {print $2}'); \
-        echo "Processing: ${package_name}"; \
-        dpkg --ctrl-tarfile $deb | tar -Oxf - ./control > /dpkg/var/lib/dpkg/status.d/${package_name}; \
-        dpkg --extract $deb /dpkg || exit 10; \
-    done
-
-# Remove unnecessary files extracted from deb packages like man pages and docs etc.
-RUN find /dpkg/ -type d -empty -delete && \
-    rm -r /dpkg/usr/share/doc/
-
-# Intermediate image used as a pre-cursor to testing and the final released image
-# Have to use a fixed base image for the build framework
-ARG FLUENT_BIT_VER=1.8.14
-FROM fluent/fluent-bit:$FLUENT_BIT_VER as builder
-
-#hadolint ignore=DL3006
-FROM gcr.io/distroless/cc-debian11 as production
-
-COPY --from=deb-extractor /dpkg /
-COPY --from=builder /fluent-bit /fluent-bit
+ARG FLUENT_BIT_VER=1.9.7
+FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -86,7 +28,7 @@ COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=1.8.14
+ARG FLUENT_BIT_VER=1.9.7
 FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -106,18 +48,13 @@ ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
 
 # Disable mem buf limits for testing
-ENV	MBL_AUDIT "false"
-ENV	MBL_ERLANG "false"
-ENV	MBL_EVENTING "false"
-ENV	MBL_HTTP "false"
-ENV	MBL_INDEX_PROJECTOR "false"
-ENV	MBL_JAVA "false"
-ENV	MBL_MEMCACHED "false"
-ENV	MBL_PROMETHEUS "false"
-ENV	MBL_REBALANCE "false"
-ENV	MBL_XDCR "false"
-
-# Use busybox so custom shell location, need to chmod for log output write access
+ENV	MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+# Kubernetes defaults
+ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
+# Couchbase defaults
+ENV couchbase_cluster=unknown operator.couchbase.com/version=unknown server.couchbase.com/version=unknown couchbase_node=unknown couchbase_node_conf=unknown couchbase_server=unknown
+# Service label defaults to false
+ENV couchbase_service_analytics=false couchbase_service_data=false couchbase_service_eventing=false couchbase_service_index=false couchbase_service_query=false couchbase_service_search=false
 
 RUN chmod 777 /fluent-bit/test/ && \
     chmod 777 /fluent-bit/test/logs && \
@@ -137,7 +74,7 @@ ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.14
+ARG FLUENT_BIT_VER=1.9.7
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -164,7 +101,7 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.8.14
+ARG FLUENT_BIT_VER=1.9.7
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -178,6 +115,15 @@ ENV LOKI_MATCH=no-match LOKI_HOST=loki LOKI_PORT=3100
 ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_HTTP_USER="" ES_HTTP_PASSWD=""
 # Splunk defaults
 ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match
+
+# Disable mem buf limits by default
+ENV	MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+# Kubernetes defaults
+ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
+# Couchbase defaults
+ENV couchbase_cluster=unknown operator.couchbase.com/version=unknown server.couchbase.com/version=unknown couchbase_node=unknown couchbase_node_conf=unknown couchbase_server=unknown
+# Service label defaults to false
+ENV couchbase_service_analytics=false couchbase_service_data=false couchbase_service_eventing=false couchbase_service_index=false couchbase_service_query=false couchbase_service_search=false
 
 # Entry point - run our custom binary
 CMD ["/fluent-bit/bin/couchbase-watcher"]
