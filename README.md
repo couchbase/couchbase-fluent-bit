@@ -318,13 +318,18 @@ The branching strategy is to minimise any branches other than `main` following t
 
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
-
-* main - in progress for next relase (1.2.0)
+* main
+  * Updated Fluent Bit to [1.9.7](https://fluentbit.io/announcements/v1.9.7/).
+  * Updated Couchbase config to be compatible with new Fluent Bit version.
+* 1.2.1
+  * Updated Dockerfile to fix broken builds.
+* 1.2.0
   * Updated Fluent Bit to [1.8.14](https://fluentbit.io/announcements/v1.8.14/).
-  * Resolved issue where [Loki labels were being set incorrectly](https://issues.couchbase.com/browse/K8S-2530)
-  * Updated compatibility matrix
-  * Added in Elasticsearch and Splunk output plugins
-  * Changed output Record `couchbase.server` to `couchbase.server.server` to support Elasticsearch outputs
+  * Resolved issue where [Loki labels were being set incorrectly](https://issues.couchbase.com/browse/K8S-2530).
+  * Updated compatibility matrix.
+  * Added in Elasticsearch and Splunk output plugins.
+  * Changed output Record `couchbase.server` to `couchbase.server.server` to support Elasticsearch outputs.
+  * Added memory buffer limits.
 * 1.1.2
   * Updated to Go 1.17.1 - this relates to the internal Watcher code layered on top of Fluent Bit.
   * Additional configuration variables now available for [Loki output and the HTTP server](https://issues.couchbase.com/browse/K8S-2354).
