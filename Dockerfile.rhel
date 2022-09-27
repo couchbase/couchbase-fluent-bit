@@ -1,8 +1,9 @@
-FROM registry.access.redhat.com/ubi8/ubi:8.4 as builder
+# hadolint ignore=DL3006
+FROM registry.access.redhat.com/ubi8/ubi as builder
 # hadolint ignore=DL3041
 RUN dnf update -y && dnf install -y cmake diffutils gcc gcc-c++ libpq-devel m4 make openssl-devel systemd-devel tar unzip libyaml-devel && dnf clean all
 
-ARG FLUENT_BIT_VER=1.9.7
+ARG FLUENT_BIT_VER=1.9.8
 ADD https://github.com/fluent/fluent-bit/archive/refs/tags/v${FLUENT_BIT_VER}.zip /source.zip
 RUN mkdir -p /fluent-bit/bin /fluent-bit/etc /fluent-bit/log /tmp/src \
       && unzip /source.zip -d /tmp/src && mv /tmp/src/fluent-bit-*/* /tmp/src/ \
@@ -59,12 +60,13 @@ COPY --from=builder /fluent-bit /fluent-bit
 # See Dockerfile for details - this should all be equivalent to the standard image
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
-COPY conf/ /fluent-bit/etc/
-ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
+COPY config/conf/ /fluent-bit/etc/
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /tmp/rebalance-logs
 ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs
+ENV COUCHBASE_AUDIT_LOGS /opt/couchbase/var/lib/couchbase/logs
 VOLUME /fluent-bit/config
 ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
-COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
+COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
@@ -88,10 +90,11 @@ ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
-ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
+ENV COUCHBASE_AUDIT_LOGS /fluent-bit/test/logs
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /fluent-bit/test/logs/rebalance-logs
 
 # Disable mem buf limits for testing
-ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX=false MBL_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false MBL_QUERY=false MBL_FTS=false
 # Kubernetes defaults
 ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
 # Couchbase defaults
@@ -106,7 +109,7 @@ RUN mkdir /tmp/buffers && \
 # Need to chmod for log & config output write access
 # Add user to run as
 RUN chmod 777 /fluent-bit/test/ /fluent-bit/test/logs && \
-    chmod 777 /fluent-bit/etc/couchbase && \
+    chmod 777 -R /fluent-bit/etc/couchbase && \
     useradd -u 8453 -m -s /bin/false couchbase
 USER 8453
 
@@ -116,7 +119,7 @@ EXPOSE $HTTP_PORT
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.9.7
+ARG FLUENT_BIT_VER=1.9.8
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -133,7 +136,7 @@ EXPOSE $HTTP_PORT
 CMD ["/fluent-bit/bin/couchbase-watcher"]
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.9.7
+ARG FLUENT_BIT_VER=1.9.8
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -149,7 +152,7 @@ ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_H
 ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match
 
 # Disable mem buf limits by default
-ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX=false MBL_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false MBL_QUERY=false MBL_FTS=false
 # Kubernetes defaults
 ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
 # Couchbase defaults

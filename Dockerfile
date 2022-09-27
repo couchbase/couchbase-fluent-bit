@@ -1,4 +1,4 @@
-ARG FLUENT_BIT_VER=1.9.7
+ARG FLUENT_BIT_VER=1.9.8
 FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
 
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
@@ -6,12 +6,14 @@ ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 # We need to layer on a binary to pre-process the rebalance reports and watch for config changes
 COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
 # Add any default configuration we can provide
-COPY conf/ /fluent-bit/etc/
+# COPY conf/ /fluent-bit/etc/
+COPY config/conf/ /fluent-bit/etc/
 
 # Set up output for rebalance pre-processing - can be overridden, e.g. for testing
-ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /tmp/rebalance-logs
 # Default location for logs but also set by the operator
 ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs
+ENV COUCHBASE_AUDIT_LOGS /opt/couchbase/var/lib/couchbase/logs
 
 # To support mounting a configmap or secret but mixing with existing files we use a separate volume
 # This way we can keep using the parsers defined without having to re-define them.
@@ -19,7 +21,7 @@ ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs
 VOLUME /fluent-bit/config
 ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 # Put a copy of the config in the area we want to monitor
-COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
+COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
@@ -28,7 +30,7 @@ COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=1.9.7
+ARG FLUENT_BIT_VER=1.9.8
 FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug as test
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
@@ -45,10 +47,12 @@ COPY bin/linux/log-differ /bin/log-differ
 
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
-ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
+ENV COUCHBASE_AUDIT_LOGS /fluent-bit/test/logs
+
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /fluent-bit/test/logs/rebalance-logs
 
 # Disable mem buf limits for testing
-ENV	MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX=false MBL_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false MBL_QUERY=false MBL_FTS=false
 # Kubernetes defaults
 ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
 # Couchbase defaults
@@ -58,7 +62,7 @@ ENV couchbase_service_analytics=false couchbase_service_data=false couchbase_ser
 
 RUN chmod 777 /fluent-bit/test/ && \
     chmod 777 /fluent-bit/test/logs && \
-    chmod 777 /fluent-bit/etc/couchbase
+    chmod 777 -R /fluent-bit/etc/couchbase
 
 # Create folder for input plugin buffers
 RUN mkdir /tmp/buffers && \
@@ -74,7 +78,7 @@ ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.9.7
+ARG FLUENT_BIT_VER=1.9.8
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -82,7 +86,7 @@ ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 # Wrap our test cases in a script that supports checking for errors and then using an exit code directly
 # https://github.com/fluent/fluent-bit/issues/3268
 # It can also run all test cases in one go then rather than have to list them all individually
-CMD ["/fluent-bit/test/run-tests.sh"]
+CMD ["/bin/bash", "/fluent-bit/test/run-tests.sh"]
 
 # We need an un-targeted build stage to support the build pipeline
 FROM production
@@ -101,7 +105,7 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.9.7
+ARG FLUENT_BIT_VER=1.9.8
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -117,7 +121,7 @@ ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_H
 ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match
 
 # Disable mem buf limits by default
-ENV	MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false
+ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX=false MBL_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false MBL_QUERY=false MBL_FTS=false
 # Kubernetes defaults
 ENV POD_NAMESPACE=unknown POD_NAME=unknown POD_UID=unknown
 # Couchbase defaults

@@ -79,7 +79,6 @@
 2021-03-09T17:33:27.560+00:00 [Info] ExhaustSwap time: 0ns
 2021-03-09T17:33:27.560+00:00 [Info] ExhaustSwap call: 0
 2021-03-09T17:33:27.560+00:00 [Info] ----------------------------------------
-2021-03-09T17:33:27.560+00:00 [Info] 
 2021-03-09T18:35:54.175+00:00 [Info] Indexer::monitorMemUsage MemoryUsed Total 74608640 Idle 6373376
 2021-03-09T18:36:04.024+00:00 [Info] PeriodicStats = {"cpu_utilization":0.05490740415363531,"index_not_found_errcount":0,"indexer_state":"Active","memory_free":230768640,"memory_quota":268435456,"memory_rss":41308160,"memory_total":12566716416,"memory_total_storage":5787648,"memory_used":68235264,"memory_used_queue":0,"memory_used_storage":212992,"needs_restart":false,"num_connections":0,"num_cpu_core":6,"storage_mode":"memory_optimized","timestamp":"1615314964024622700","timings/stats_response":"3223 751458400 7050713208420000","uptime":"1h3m49.0810949s"}
 ==== StorageStats ====

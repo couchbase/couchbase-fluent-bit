@@ -1,4 +1,5 @@
 SOURCE = $(shell find . -name *.go -type f)
+CONFIG = $(shell find ./config/ -name *.conf -type f)
 bldNum = $(if $(BLD_NUM),$(BLD_NUM),999)
 version = $(if $(VERSION),$(VERSION),1.1.1)
 productVersion = $(version)-$(bldNum)
@@ -13,7 +14,7 @@ GOLINT_VERSION := v1.42.1
 TRIVY_TAG=0.23.0
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=1.9.7
+FLUENT_BIT_VER=1.9.8
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
@@ -41,20 +42,25 @@ TEST_LDFLAGS = "-X github.com/couchbase/fluent-bit/pkg/version.version=1 -X gith
 
 all: clean build lint test-unit container container-rhel container-scan container-rhel-checks test dist test-dist
 
-build: $(SOURCE) go.mod
+build: $(SOURCE) go.mod config
 	for platform in linux darwin ; do \
 	  echo "Building $$platform binary" ; \
 	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher ./cmd ; \
 	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/log-differ ./tools/log-differ.go ; \
 	done
 
+config:
+	git submodule update --init --recursive
+
 image-artifacts: build
 	mkdir -p $(ARTIFACTS)/bin/linux
+	mkdir -p $(ARTIFACTS)/config/conf
 	cp bin/linux/couchbase-watcher $(ARTIFACTS)/bin/linux
 	cp bin/linux/log-differ $(ARTIFACTS)/bin/linux
 	cp Dockerfile* LICENSE README.md $(ARTIFACTS)
 	cp non-root.passwd $(ARTIFACTS)
-	cp -rv conf licenses lua test $(ARTIFACTS)
+	cp -rv config/conf $(ARTIFACTS)/config/
+	cp -rv licenses lua test $(ARTIFACTS)
 
 # This target (and only this target) is invoked by the production build job.
 # This job will archive all files that end up in the dist/ directory.
@@ -92,7 +98,7 @@ container-rhel: build
 # RHEL base image fails Dive checks so just include for info and do not fail the build
 container-scan: container container-rhel
 	docker inspect ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} --format '{{.Config.User}}' | grep -q "8453"
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
+	- docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
 		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
 		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}

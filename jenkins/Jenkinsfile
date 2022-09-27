@@ -9,6 +9,11 @@ pipeline {
   }
 
   stages {
+    stage('Checkout config') {
+      steps {
+        sh 'git submodule update --init --recursive'
+      }
+    }
     stage('Go Install') {
       steps {
         sh 'wget -q -O- https://dl.google.com/go/go${GOVERSION}.linux-amd64.tar.gz | tar xz'
@@ -16,6 +21,7 @@ pipeline {
     }
     stage('Build & test') {
       steps {
+        sh 'ls'
         sh 'make clean all'
       }
     }

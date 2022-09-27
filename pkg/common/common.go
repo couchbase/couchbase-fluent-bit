@@ -44,7 +44,7 @@ const (
 	binaryDefault            = "/fluent-bit/bin/fluent-bit"
 	logsLocationEnvVar       = "COUCHBASE_LOGS"
 	logsLocationDefault      = "/opt/couchbase/var/lib/couchbase/logs/"
-	rebalanceLocationEnvVar  = "COUCHBASE_LOGS_REBALANCE_TEMPDIR"
+	rebalanceLocationEnvVar  = "COUCHBASE_LOGS_REBALANCE_TMP_DIR"
 	rebalanceLocationDefault = "/tmp/rebalance-logs"
 	bufferLocationEnvVar     = "STORAGE_BUFFER_PATH"
 	bufferLocationDefault    = "/tmp/buffer"
@@ -65,16 +65,19 @@ const (
 
 // All default memory buffer limits.
 var memoryBufLimits = map[string]string{
-	"MBL_AUDIT":           "false",
-	"MBL_ERLANG":          "false",
-	"MBL_EVENTING":        "false",
-	"MBL_HTTP":            "false",
-	"MBL_INDEX_PROJECTOR": "false",
-	"MBL_JAVA":            "false",
-	"MBL_MEMCACHED":       "false",
-	"MBL_PROMETHEUS":      "false",
-	"MBL_REBALANCE":       "false",
-	"MBL_XDCR":            "false",
+	"MBL_AUDIT":      "false",
+	"MBL_ERLANG":     "false",
+	"MBL_EVENTING":   "false",
+	"MBL_HTTP":       "false",
+	"MBL_INDEX":      "false",
+	"MBL_PROJECTOR":  "false",
+	"MBL_JAVA":       "false",
+	"MBL_MEMCACHED":  "false",
+	"MBL_PROMETHEUS": "false",
+	"MBL_REBALANCE":  "false",
+	"MBL_XDCR":       "false",
+	"MBL_QUERY":      "false",
+	"MBL_FTS":        "false",
 }
 
 func GetStorageBufferDir() string {

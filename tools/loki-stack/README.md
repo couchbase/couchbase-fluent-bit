@@ -136,7 +136,7 @@ Now we have Loki and Grafana configured correctly, let us create a new configura
 
 ```
 @include /fluent-bit/etc/fluent-bit.conf
-@include /fluent-bit/etc/couchbase/out-loki.conf
+@include /fluent-bit/etc/couchbase/output/out-loki.conf
 ```
 
 This is what the example in this directory uses as we get Docker Compose to handle making the Loki container a resolvable host from the others.

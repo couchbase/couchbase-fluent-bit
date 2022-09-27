@@ -87,10 +87,10 @@ func TestHandlesEnvMemBufLimits(t *testing.T) {
 	os.Setenv(common.ContainerLimitsMemEnvVar, "1000")
 	os.Setenv(common.MemBufLimitsEnabledEnvVar, "true")
 
-	var keys = [...]string{"MBL_AUDIT", "MBL_ERLANG", "MBL_EVENTING", "MBL_HTTP", "MBL_INDEX_PROJECTOR", "MBL_JAVA", "MBL_MEMCACHED", "MBL_PROMETHEUS", "MBL_REBALANCE", "MBL_XDCR"}
+	var keys = [...]string{"MBL_AUDIT", "MBL_ERLANG", "MBL_EVENTING", "MBL_HTTP", "MBL_INDEX", "MBL_PROJECTOR", "MBL_JAVA", "MBL_MEMCACHED", "MBL_PROMETHEUS", "MBL_REBALANCE", "MBL_XDCR", "MBL_QUERY", "MBL_FTS"}
 
 	// test with audit enabled
-	var expected = "62MB"
+	var expected = "35MB"
 
 	os.Setenv(common.AuditEnabledEnvVar, "true")
 
@@ -112,7 +112,7 @@ func TestHandlesEnvMemBufLimits(t *testing.T) {
 	}
 
 	// test with audit disabled
-	expected = "66MB"
+	expected = "37MB"
 
 	os.Setenv(common.AuditEnabledEnvVar, "false")
 

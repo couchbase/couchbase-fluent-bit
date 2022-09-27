@@ -6,7 +6,8 @@
 # Now include all the files we need for functionality
 !*-repo.rhel
 !bin/
-!conf/
+# !conf/
+!config/
 !redaction/
 !lua/
 !non-root.passwd

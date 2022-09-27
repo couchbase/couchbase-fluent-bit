@@ -20,12 +20,13 @@ RUN mkdir -p /fluent-bit/etc/ && \
     cp --recursive /etc/td-agent-bit/ /fluent-bit/etc/
 COPY conf/ /fluent-bit/etc/
 
-ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /tmp/rebalance-logs
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /tmp/rebalance-logs
 ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs/
+ENV COUCHBASE_AUDIT_LOGS /opt/couchbase/var/lib/couchbase/logs/
 
 VOLUME /fluent-bit/config
 ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
-COPY conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
+COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
 COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
@@ -39,7 +40,8 @@ COPY test/ /fluent-bit/test/
 
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs
-ENV COUCHBASE_LOGS_REBALANCE_TEMPDIR /fluent-bit/test/logs/rebalance-logs
+ENV COUCHBASE_AUDIT_LOGS /fluent-bit/test/logs
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /fluent-bit/test/logs/rebalance-logs
 
 EXPOSE 2020
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]

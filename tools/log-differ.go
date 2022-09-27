@@ -63,7 +63,7 @@ func readLines(filename string) ([]string, error) {
 func processString(line string) string {
 	newLine := "{ " + line + " }"
 	// replace filename with "filename"
-	objKeysRegex := regexp.MustCompile(`([{])(\s*)([_/.A-Za-z0-9_\-]+?)\s*:`)
+	objKeysRegex := regexp.MustCompile(`^([{])(\s*)([_/.A-Za-z0-9_\-]+?)\s*:`)
 	newLine = objKeysRegex.ReplaceAllString(newLine, "$1\"$3\":")
 
 	// for our __IGNORE__ or __REDACT__
@@ -104,8 +104,14 @@ func main() {
 			panic(err)
 		}
 		diff := a.Diff(b)
+
+		// ignore diff if it's just the first field since that's a timestamp.
+		if len(diff) == 1 && len(diff[0].Path) == 2 && diff[0].Path[1].Json(nil) == "0" {
+			continue
+		}
 		if len(diff) != 0 {
 			diffs = append(diffs, diff...)
+
 		}
 	}
 	if len(diffs) != 0 {

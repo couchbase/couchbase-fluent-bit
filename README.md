@@ -208,12 +208,13 @@ This also supports a blog post showing how to do this in detail: https://blog.co
 | --- | --- | --- |
 | COUCHBASE_FLUENT_BIT_CONFIG | The directory containing the Couchbase (or other) configuration files, primarily used for dynamic output configuration. | /fluent-bit/etc/couchbase |
 | COUCHBASE_LOGS | The directory in which to find the various Couchbase logs we are interested in. | /opt/couchbase/var/couchbase/logs |
+| COUCHBASE_AUDIT_LOGS | The directory in which to find the Couchbase audit log file. | /opt/couchbase/var/couchbase/logs |
 | COUCHBASE_LOGS_BINARY | The Fluent Bit binary to launch. | /fluent-bit/bin/fluent-bit |
 | COUCHBASE_LOGS_CONFIG_FILE | The config file to use when starting Fluent Bit. | /fluent-bit/config/fluent-bit.conf |
 | COUCHBASE_LOGS_DYNAMIC_CONFIG | The directory to watch for config changes and restart Fluent Bit. | /fluent-bit/config |
-| COUCHBASE_LOGS_REBALANCE_TEMPDIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
+| COUCHBASE_LOGS_REBALANCE_TMP_DIR | The temporary directory for out pre-processed rebalance reports. | /tmp/rebalance-logs |
 | COUCHBASE_K8S_CONFIG_DIR | The location where [DownwardAPI](https://kubernetes.io/docs/tasks/inject-data-application/downward-api-volume-expose-pod-information/) pushes pod meta-data to load as environment variables. | /etc/podinfo |
-| MEM_BUF_LIMITS_ENABLED | Whether memory buffer limits should be enabled on the input plugins | false | 
+| MEM_BUF_LIMITS_ENABLED | Whether memory buffer limits should be enabled on the input plugins | false |
 | LOKI_HOST | The hostname used by the Loki output plugin (if enabled). | loki |
 | LOKI_MATCH | The set of matching streams to send to Loki. | no-match (prevents any) |
 | LOKI_PORT | The port used by the Loki output plugin (if enabled). | 3100 |
@@ -268,7 +269,14 @@ The major benefit of this for CAO deployments is we only need to have user-defin
 
 ## Building
 
-This repository is set up to be built by the internal Couchbase process with a `Makefile`.
+This repository consumes [fluent-bit configuration](https://github.com/couchbaselabs/couchbase-fluent-bit-config).
+To get started for building, 
+1. `repo init -u https://github.com/couchbase/manifest -m couchbase-fluent-bit/main.xml`
+2. `repo sync`
+3. `cd fluent-bit-sidecar`
+
+This repository can then be built by the internal Couchbase process with a `Makefile`.
+
 This can be easily reused though to build locally either by installing the relevant tools or using a Golang container to build the source.
 
 ## Testing
@@ -319,7 +327,8 @@ The branching strategy is to minimise any branches other than `main` following t
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 * main
-  * Updated Fluent Bit to [1.9.7](https://fluentbit.io/announcements/v1.9.7/).
+  * Moved Couchbase Fluent Bit to [Fluent Bit Config](https://github.com/couchbaselabs/couchbase-fluent-bit-config)
+  * Updated Fluent Bit to [1.9.8](https://fluentbit.io/announcements/v1.9.8/).
   * Updated Couchbase config to be compatible with new Fluent Bit version.
 * 1.2.1
   * Updated Dockerfile to fix broken builds.

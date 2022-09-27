@@ -19,7 +19,7 @@
 # All configuration is via environment variable with the intention to provide these to the container at runtime.
 #
 # The intention here is to allow this to be configurable so we can repeat with different logs.
-# The only thing required is to specify the $COUCHBASE_LOGS directory with the expected logs in.
+# The only thing required is to specify the $COUCHBASE_LOGS and $COUCHBASE_AUDIT_LOGS directory with the expected logs in.
 # For every log there should be an equivalent expected output with the same name and a .expected suffix.
 # For example, debug.log would be run which produces a debug.log.actual and is then compared against debug.log.expected.
 #
@@ -50,7 +50,7 @@ export couchbase_node=cb-node
 # Document settings and echo them together so we can see them in output
 echo "COUCHBASE_LOGS_BINARY set to ${COUCHBASE_LOGS_BINARY} - using as fluent bit binary"
 echo "COUCHBASE_LOGS set to ${COUCHBASE_LOGS} - put all log files here and expected output"
-echo "COUCHBASE_LOGS_REBALANCE_TEMPDIR set to ${COUCHBASE_LOGS_REBALANCE_TEMPDIR} - temporary rebalance report output directory"
+echo "COUCHBASE_LOGS_REBALANCE_TMP_DIR set to ${COUCHBASE_LOGS_REBALANCE_TMP_DIR} - temporary rebalance report output directory"
 echo "EXPECT_TEST_TIMEOUT set to ${EXPECT_TEST_TIMEOUT} - the time taken to run each CI test before we kill it"
 echo "FLUENT_BIT_TEST_TIMEOUT set to ${FLUENT_BIT_TEST_TIMEOUT} - the time taken to run each Fluent Bit test before we kill it"
 echo "FLUENTBIT_VERSION set to ${FLUENTBIT_VERSION} - the version of fluent bit used for this container"
@@ -124,20 +124,20 @@ fi
 # Deal with any rebalance reports by invoking the watcher
 if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
     # Test the removal of old files once we have >5 - create some dummy ones if we don't have an existing directory mounted in
-    if [[ ! -d "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" ]]; then
+    if [[ ! -d "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}" ]]; then
         echo "Creating dummy files to test rotation of old files in rebalance processing"
         # Add a sub-directory to test that as well
-        mkdir -p "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"/1
-        # Does not work for busybox: `touch "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"/{2..10}.test`
+        mkdir -p "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}"/1
+        # Does not work for busybox: `touch "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}"/{2..10}.test`
         for i in $(seq 2 10); do
-            touch "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}/${i}.test"
+            touch "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}/${i}.test"
             sleep 1 # Give us a slight modification time...
         done
 
         # Be careful not to mount extra ones in
-        if [[ $(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -maxdepth 1 -print | wc -l) -ne 11 ]]; then
-            echo "FAILED: Unable to create files/directory to test in ${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
-            ls -l "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
+        if [[ $(find "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}" -maxdepth 1 -print | wc -l) -ne 11 ]]; then
+            echo "FAILED: Unable to create files/directory to test in ${COUCHBASE_LOGS_REBALANCE_TMP_DIR}"
+            ls -l "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}"
             exitCode=1
         fi
     fi
@@ -146,11 +146,11 @@ if [[ -d "${COUCHBASE_LOGS}/rebalance" ]]; then
     # Run the watcher in the special mode to process existing and exit
     if /fluent-bit/bin/couchbase-watcher --ignoreExisting=false; then
         countOfInput=$(find "${COUCHBASE_LOGS}/rebalance" -type f -name "rebalance_report_*.json" -print |wc -l)
-        countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -type f -name "rebalance-processed-*.json" -print |wc -l)
+        countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}" -type f -name "rebalance-processed-*.json" -print |wc -l)
 
         if [[ $countOfInput -eq $countOfOutput ]]; then
             echo "PASSED: Processed all rebalance reports"
-            ls -l "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
+            ls -l "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}"
         else
             echo "FAILED: Unable to process rebalance reports, $countOfInput != $countOfOutput"
             exitCode=1
@@ -167,15 +167,15 @@ fi
 rm -f "${COUCHBASE_LOGS}"/*.log.actual
 
 # Now run tests per input configuration so we can verify individually otherwise if any failed we would just exit with a failure.
-for i in /fluent-bit/etc/couchbase/in-*.conf; do
+for i in /fluent-bit/etc/couchbase/input/in-*.conf; do
     # Ignore invalid/non-files
     [[ ! -f "$i" ]] && continue
     # Skip rebalance if no reports
-    [[ "$i" == "/fluent-bit/etc/couchbase/in-rebalance-report.conf" ]] && [[ ! -d "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" ]] && continue
+    [[ "$i" == "/fluent-bit/etc/couchbase/input/in-rebalance-report.conf" ]] && [[ ! -d "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}" ]] && continue
 
     testConfig="$i.test-conf"
     testLog="$i.log"
-    contents=$(cat "$i")
+    contents=$(sed $'/\[INPUT\]/a\    Read\_from\_head on' "$i")
     cat > "$testConfig" << __FB_EOF
 @include /fluent-bit/test/conf/test-service.conf
 
@@ -184,7 +184,6 @@ for i in /fluent-bit/etc/couchbase/in-*.conf; do
 # https://github.com/fluent/fluent-bit/issues/3274
 # Instead we rely on a timeout ending the test case.
 $contents
-    Read_from_head On
 
 @include /fluent-bit/test/conf/test-filters.conf
 @include /fluent-bit/test/conf/test-output.conf
@@ -201,7 +200,7 @@ for i in /fluent-bit/test/test-*.conf; do
 done
 
 # Run special test case
-if sh /fluent-bit/test/run-file-transfer-tests.sh; then
+if bash /fluent-bit/test/run-file-transfer-tests.sh; then
     echo "PASSED: file transfer example script"
 else
     echo "FAILED: file transfer example"
@@ -242,15 +241,15 @@ for i in "${COUCHBASE_LOGS}"/*.expected; do
 done
 
 # Finally confirm we have rebalance output although skip verifying the actual JSON
-if [[ -d "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" ]]; then
+if [[ -d "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}" ]]; then
     countOfInput=$(find "${COUCHBASE_LOGS}/rebalance" -type f -name "rebalance_report_*.json" -print |wc -l)
-    countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}" -type f -name "rebalance*.actual" -print |wc -l)
+    countOfOutput=$(find "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}" -type f -name "rebalance*.actual" -print |wc -l)
 
     if [[ $countOfInput -eq $countOfOutput ]]; then
         echo "PASSED: Handled all rebalance reports"
     else
         echo "FAILED: Unable to handle rebalance reports, $countOfInput != $countOfOutput"
-        ls -l "${COUCHBASE_LOGS_REBALANCE_TEMPDIR}"
+        ls -l "${COUCHBASE_LOGS_REBALANCE_TMP_DIR}"
         exitCode=1
     fi
 fi
