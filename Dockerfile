@@ -1,10 +1,11 @@
 ARG FLUENT_BIT_VER=1.9.8
 FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
 
+ARG TARGETARCH
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 # We need to layer on a binary to pre-process the rebalance reports and watch for config changes
-COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
+COPY bin/linux/couchbase-watcher-${TARGETARCH} /fluent-bit/bin/couchbase-watcher
 # Add any default configuration we can provide
 # COPY conf/ /fluent-bit/etc/
 COPY config/conf/ /fluent-bit/etc/
@@ -32,6 +33,7 @@ COPY lua/*.lua /fluent-bit/etc/
 # Testing image to verify parsers and the watcher functionality
 ARG FLUENT_BIT_VER=1.9.8
 FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug as test
+ARG TARGETARCH
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
@@ -43,7 +45,7 @@ COPY lua/*.lua /fluent-bit/etc/
 # Add test cases (need write permissions as well for logs)
 COPY test/ /fluent-bit/test/
 # Copy over the log differ binary
-COPY bin/linux/log-differ /bin/log-differ
+COPY bin/linux/log-differ-${TARGETARCH} /bin/log-differ
 
 # Redirect to local logs
 ENV COUCHBASE_LOGS /fluent-bit/test/logs

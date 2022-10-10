@@ -44,9 +44,11 @@ all: clean build lint test-unit container container-rhel container-scan containe
 
 build: $(SOURCE) go.mod config
 	for platform in linux darwin ; do \
-	  echo "Building $$platform binary" ; \
-	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher ./cmd ; \
-	  GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/log-differ ./tools/log-differ.go ; \
+		for arch in arm64 amd64; do \
+	  		echo "Building $$platform $$arch binary" ; \
+	  		GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher-$$arch ./cmd ; \
+	  		GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/log-differ-$$arch ./tools/log-differ.go ; \
+	  done \
 	done
 
 config:
@@ -55,8 +57,8 @@ config:
 image-artifacts: build
 	mkdir -p $(ARTIFACTS)/bin/linux
 	mkdir -p $(ARTIFACTS)/config/conf
-	cp bin/linux/couchbase-watcher $(ARTIFACTS)/bin/linux
-	cp bin/linux/log-differ $(ARTIFACTS)/bin/linux
+	cp bin/linux/couchbase-watcher-* $(ARTIFACTS)/bin/linux/
+	cp bin/linux/log-differ-* $(ARTIFACTS)/bin/linux/
 	cp Dockerfile* LICENSE README.md $(ARTIFACTS)
 	cp non-root.passwd $(ARTIFACTS)
 	cp -rv config/conf $(ARTIFACTS)/config/
@@ -98,9 +100,9 @@ container-rhel: build
 # RHEL base image fails Dive checks so just include for info and do not fail the build
 container-scan: container container-rhel
 	docker inspect ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} --format '{{.Config.User}}' | grep -q "8453"
-	- docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
+	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
 		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
+	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
 		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -e CI=true wagoodman/dive \
 		${DOCKER_USER}/fluent-bit:${DOCKER_TAG}

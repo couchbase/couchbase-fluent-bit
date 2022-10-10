@@ -46,6 +46,7 @@ RUN cmake \
 RUN cp /tmp/src/conf/*.conf /fluent-bit/etc/
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4 as production
+ARG TARGETARCH
 LABEL description="Couchbase Fluent Bit image with support for config reload, pre-processing and redaction" vendor="Couchbase" maintainer="docker@couchbase.com"
 # ubi-minimal updates frequently and has very few packages installed,
 # so no need for a "security-only" update.
@@ -59,7 +60,7 @@ COPY --from=builder /fluent-bit /fluent-bit
 
 # See Dockerfile for details - this should all be equivalent to the standard image
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
-COPY bin/linux/couchbase-watcher /fluent-bit/bin/couchbase-watcher
+COPY bin/linux/couchbase-watcher-${TARGETARCH} /fluent-bit/bin/couchbase-watcher
 COPY config/conf/ /fluent-bit/etc/
 ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /tmp/rebalance-logs
 ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs
@@ -73,9 +74,11 @@ COPY lua/*.lua /fluent-bit/etc/
 
 # Try to hide some of the RHEL wastage
 FROM production as test
+ARG TARGETARCH
+
 RUN microdnf update && microdnf install -y findutils-1:4.* && microdnf clean all
 
-COPY bin/linux/log-differ /bin/log-differ
+COPY bin/linux/log-differ-${TARGETARCH} /bin/log-differ
 # Add unit tests from Fluent Bit so we can run
 COPY --from=builder /tmp/src/build/bin/flb-* /fluent-bit/test/bin/
 # We need test config & other data
