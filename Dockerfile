@@ -132,4 +132,4 @@ ENV couchbase_cluster=unknown operator.couchbase.com/version=unknown server.couc
 ENV couchbase_service_analytics=false couchbase_service_data=false couchbase_service_eventing=false couchbase_service_index=false couchbase_service_query=false couchbase_service_search=false
 
 # Entry point - run our custom binary
-CMD ["/fluent-bit/bin/couchbase-watcher"]
+ENTRYPOINT ["/fluent-bit/bin/couchbase-watcher"]

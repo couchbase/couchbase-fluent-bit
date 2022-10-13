@@ -136,7 +136,7 @@ USER 8453
 ARG HTTP_PORT=2020
 ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
-CMD ["/fluent-bit/bin/couchbase-watcher"]
+ENTRYPOINT ["/fluent-bit/bin/couchbase-watcher"]
 
 # Keep track of the versions we are using - not persisted between stages
 ARG FLUENT_BIT_VER=1.9.8
