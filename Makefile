@@ -42,7 +42,7 @@ TEST_LDFLAGS = "-X github.com/couchbase/fluent-bit/pkg/version.version=1 -X gith
 
 all: clean build lint test-unit container container-rhel container-scan container-rhel-checks test dist test-dist
 
-build: $(SOURCE) go.mod config
+build: $(SOURCE) go.mod check-and-reinit-submodules
 	for platform in linux darwin ; do \
 		for arch in arm64 amd64; do \
 	  		echo "Building $$platform $$arch binary" ; \
@@ -51,8 +51,13 @@ build: $(SOURCE) go.mod config
 	  done \
 	done
 
-config:
-	git submodule update --init --recursive
+.PHONY: check-and-reinit-submodules
+check-and-reinit-submodules:
+
+	if git submodule status | grep ^[\-\+]; then \
+		echo "Updating submodules"; \
+		git submodule update --init; \
+	fi
 
 image-artifacts: build
 	mkdir -p $(ARTIFACTS)/bin/linux
