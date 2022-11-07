@@ -7,7 +7,6 @@ ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 # We need to layer on a binary to pre-process the rebalance reports and watch for config changes
 COPY bin/linux/couchbase-watcher-${TARGETARCH} /fluent-bit/bin/couchbase-watcher
 # Add any default configuration we can provide
-# COPY conf/ /fluent-bit/etc/
 COPY config/conf/ /fluent-bit/etc/
 
 # Set up output for rebalance pre-processing - can be overridden, e.g. for testing
@@ -25,6 +24,7 @@ ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
+COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/etc/fluent-bit.conf
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
 COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 # Add our custom lua scripts
@@ -108,19 +108,20 @@ USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
 ARG FLUENT_BIT_VER=1.9.8
-ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
-ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
+ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 
 # The default match we send to standard output
 ENV STDOUT_MATCH="couchbase.log.*"
 
+ENV FLUENT_BIT_LOG_LEVEL=info
+
 # Some support for Loki customisation but ensure we set defaults
-ENV LOKI_MATCH=no-match LOKI_HOST=loki LOKI_PORT=3100
+ENV LOKI_MATCH=no-match LOKI_HOST=loki LOKI_PORT=3100 LOKI_WORKERS=1 LOKI_TLS=OFF LOKI_TLS_VERIFY=OFF
 # Elasiticsearch defaults
-ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_HTTP_USER="" ES_HTTP_PASSWD=""
+ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_HTTP_USER=user ES_HTTP_PASSWD=password
 # Splunk defaults
-ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match
+ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match SPLUNK_MATCH_REGEX=no-match SPLUNK_TLS=off SPLUNK_TLS_VERIFY=off SPLUNK_WORKERS=1
 
 # Disable mem buf limits by default
 ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX=false MBL_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false MBL_QUERY=false MBL_FTS=false

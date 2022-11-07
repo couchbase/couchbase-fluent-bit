@@ -62,6 +62,7 @@ COPY --from=builder /fluent-bit /fluent-bit
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
 COPY bin/linux/couchbase-watcher-${TARGETARCH} /fluent-bit/bin/couchbase-watcher
 COPY config/conf/ /fluent-bit/etc/
+
 ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /tmp/rebalance-logs
 ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs
 ENV COUCHBASE_AUDIT_LOGS /opt/couchbase/var/lib/couchbase/logs
@@ -140,19 +141,20 @@ ENTRYPOINT ["/fluent-bit/bin/couchbase-watcher"]
 
 # Keep track of the versions we are using - not persisted between stages
 ARG FLUENT_BIT_VER=1.9.8
-ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
-ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
+ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 
 # The default match we send to standard output
 ENV STDOUT_MATCH="couchbase.log.*"
 
+ENV FLUENT_BIT_LOG_LEVEL=info
+
 # Some support for Loki customisation but ensure we set defaults
-ENV LOKI_MATCH=no-match LOKI_HOST=loki LOKI_PORT=3100
+ENV LOKI_MATCH=no-match LOKI_HOST=loki LOKI_PORT=3100 LOKI_WORKERS=1 LOKI_TLS=OFF LOKI_TLS_VERIFY=OFF
 # Elasiticsearch defaults
-ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_HTTP_USER="" ES_HTTP_PASSWD=""
+ENV ES_HOST=elasticsearch ES_PORT=9200 ES_INDEX=couchbase ES_MATCH=no-match ES_HTTP_USER=user ES_HTTP_PASSWD=password
 # Splunk defaults
-ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match
+ENV SPLUNK_HOST=splunk SPLUNK_PORT=8088 SPLUNK_TOKEN=abcd1234 SPLUNK_MATCH=no-match SPLUNK_MATCH_REGEX=no-match SPLUNK_TLS=off SPLUNK_TLS_VERIFY=off SPLUNK_WORKERS=1
 
 # Disable mem buf limits by default
 ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX=false MBL_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false MBL_QUERY=false MBL_FTS=false
