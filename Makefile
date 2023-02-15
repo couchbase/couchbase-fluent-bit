@@ -46,8 +46,8 @@ build: $(SOURCE) go.mod check-and-reinit-submodules
 	for platform in linux darwin ; do \
 		for arch in arm64 amd64; do \
 	  		echo "Building $$platform $$arch binary" ; \
-	  		GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher-$$arch ./cmd ; \
-	  		GOOS=$$platform GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/log-differ-$$arch ./tools/log-differ.go ; \
+	  		GOOS=$$platform GOARCH=$$arch CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/couchbase-watcher-$$arch ./cmd ; \
+	  		GOOS=$$platform GOARCH=$$arch CGO_ENABLED=0 GO111MODULE=on go build -trimpath -ldflags $(LDFLAGS) -o bin/$$platform/log-differ-$$arch ./tools/log-differ.go ; \
 	  done \
 	done
 
