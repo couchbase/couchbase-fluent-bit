@@ -306,14 +306,7 @@ Best efforts are made to confirm that custom configurations will work with vario
 
 ### Compatibility matrix for CAO
 
-CAO = Couchbase Autonomous Operator
-CFB = Couchbase Fluent Bit
-
-| CAO Version  | CFB Version -> | 1.0.0 | 1.0.1 | 1.0.2 | 1.0.3 | 1.0.4 | 1.1.0 | 1.1.1 | 1.1.2 | Next (1.2.0) |
-|--------------|----------------|-------|-------|-------|-------|-------|-------|-------|-------|--------------|
-| 2.2.0        |                | X     | X     | X     | X     | X     |       |       |       |              |
-| 2.2.1        |                | X     | X     | X     | X     | X     | X     | X     | X     | X            |
-| Next (2.3.0) |                |       |       |       |       | X     | X     | X     | X     | X            |
+[Compatibility Matrix](https://docs.couchbase.com/operator/current/prerequisite-and-setup.html)
 
 ## Release tagging and branching
 Every release to DockerHub will include a matching identical Git tag here, i.e. the tags on https://hub.docker.com/r/couchbase/fluent-bit/tags will have a matching tag in this repository that built them.
@@ -327,9 +320,14 @@ The branching strategy is to minimise any branches other than `main` following t
 A quick summary of each release is given below to help understand the changes.
 For full details have a look at the diff of the tags and associated commits for each: https://github.com/couchbase/couchbase-fluent-bit/releases/tag/
 * main
+  * TBD
+* 1.2.3
+  * Fixed amd64 binaries in arm64 containers
+* 1.2.2
   * Moved Couchbase Fluent Bit to [Fluent Bit Config](https://github.com/couchbaselabs/couchbase-fluent-bit-config)
   * Updated Fluent Bit to [1.9.8](https://fluentbit.io/announcements/v1.9.8/).
   * Updated Couchbase config to be compatible with new Fluent Bit version.
+  * Updated Go version to 1.19.4
 * 1.2.1
   * Updated Dockerfile to fix broken builds.
 * 1.2.0
