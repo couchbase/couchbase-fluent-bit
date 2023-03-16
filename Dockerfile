@@ -32,10 +32,9 @@ ENV COUCHBASE_AUDIT_LOGS /opt/couchbase/var/lib/couchbase/logs
 VOLUME /fluent-bit/config
 ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
 # Put a copy of the config in the area we want to monitor
-COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/config/fluent-bit.conf
+COPY config/conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
-COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/etc/fluent-bit.conf
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
 COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 # Add our custom lua scripts

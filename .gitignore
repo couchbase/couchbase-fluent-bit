@@ -13,3 +13,4 @@ test-dist/
 tools/*.csv*
 tools/integration-test/logs/*
 *.tar.gz
+conf

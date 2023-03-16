@@ -42,7 +42,7 @@ TEST_LDFLAGS = "-X github.com/couchbase/fluent-bit/pkg/version.version=1 -X gith
 
 all: clean build lint test-unit container container-rhel container-scan container-rhel-checks test dist test-dist
 
-build: $(SOURCE) go.mod check-and-reinit-submodules
+build: $(SOURCE) go.mod conf check-and-reinit-submodules
 	for platform in linux darwin ; do \
 		for arch in arm64 amd64; do \
 	  		echo "Building $$platform $$arch binary" ; \
@@ -51,9 +51,15 @@ build: $(SOURCE) go.mod check-and-reinit-submodules
 	  done \
 	done
 
+# We want the kubernetes specific conf not the cmos-plus one.
+conf: check-and-reinit-submodules
+	rm -rf ./config
+	mkdir -p ./config/conf
+	cp -r ./contrib/config/conf ./config
+	mv ./config/conf/fluent-bit-kubernetes.conf ./config/conf/fluent-bit.conf
+
 .PHONY: check-and-reinit-submodules
 check-and-reinit-submodules:
-
 	if git submodule status | grep ^[\-\+]; then \
 		echo "Updating submodules"; \
 		git submodule update --init; \
@@ -181,4 +187,4 @@ container-clean:
 	docker image prune --force
 
 clean: container-clean
-	rm -rf $(ARTIFACTS) bin/ dist/ test-dist/
+	rm -rf $(ARTIFACTS) bin/ dist/ test-dist/ config

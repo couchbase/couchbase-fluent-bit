@@ -26,7 +26,7 @@ ENV COUCHBASE_AUDIT_LOGS /opt/couchbase/var/lib/couchbase/logs/
 
 VOLUME /fluent-bit/config
 ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
-COPY config/conf/fluent-bit-kubernetes.conf /fluent-bit/config/fluent-bit.conf
+COPY config/conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
 ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
 
 COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
