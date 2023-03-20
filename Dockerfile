@@ -1,5 +1,16 @@
 ARG FLUENT_BIT_VER=1.9.8
-FROM fluent/fluent-bit:$FLUENT_BIT_VER as production
+FROM fluent/fluent-bit:$FLUENT_BIT_VER as base 
+
+FROM debian:bullseye as production
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libssl1.1 \
+    libyaml-0-2 \
+    libsasl2-2 \
+    libpq5 && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=base /fluent-bit /fluent-bit
 
 ARG TARGETARCH
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
