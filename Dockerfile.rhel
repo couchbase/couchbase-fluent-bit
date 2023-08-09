@@ -173,4 +173,5 @@ LABEL name="couchbase/fluent-bit" \
       summary="Couchbase Autonomous Operator ${PROD_VERSION} Log Support" \
       description="Couchbase Autonomous Operator ${PROD_VERSION} Log Support" \
       architecture="x86_64" \
-      run="docker run -d --name logging registry.connect.redhat.com/couchbase/fluent-bit:${PROD_VERSION}-${OS_BUILD}"
+      run="docker run -d --name logging registry.connect.redhat.com/couchbase/fluent-bit:${PROD_VERSION}-${OS_BUILD}" \
+      io.k8s.description="Fast and Lightweight Log processor and forwarder. Based on upstream Fluent Bit, this includes some additional Couchbase specific configuration and support - https://github.com/fluent/fluent-bit"
