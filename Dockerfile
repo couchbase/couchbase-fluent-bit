@@ -1,10 +1,10 @@
-ARG FLUENT_BIT_VER=1.9.8
+ARG FLUENT_BIT_VER=3.0.7
 FROM fluent/fluent-bit:$FLUENT_BIT_VER as base 
 
-FROM debian:bullseye as production
+FROM debian:bookworm as production
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libssl1.1 \
+    libssl3 \
     libyaml-0-2 \
     libsasl2-2 \
     libpq5 && \
@@ -41,7 +41,7 @@ COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=1.9.8
+ARG FLUENT_BIT_VER=3.0.7
 FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug as test
 ARG TARGETARCH
 ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
@@ -90,7 +90,7 @@ ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.9.8
+ARG FLUENT_BIT_VER=3.0.7
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -117,7 +117,7 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=1.9.8
+ARG FLUENT_BIT_VER=3.0.7
 ARG PROD_VERSION
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 

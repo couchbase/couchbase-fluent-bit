@@ -16,6 +16,8 @@ require (
 	github.com/josephburnett/jd v1.7.1
 )
 
+replace github.com/heroku/terrier => github.com/usamahjassat/terrier v0.0.0-20240717165111-2419343288b7
+
 require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect

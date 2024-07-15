@@ -14,7 +14,7 @@ GOLINT_VERSION := v1.42.1
 TRIVY_TAG=0.23.0
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=1.9.8
+FLUENT_BIT_VER=3.0.7
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
