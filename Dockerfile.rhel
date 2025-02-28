@@ -168,6 +168,7 @@ ENV couchbase_service_analytics=false couchbase_service_data=false couchbase_ser
 
 LABEL name="couchbase/fluent-bit" \
       vendor="Couchbase" \
+      maintainer="Couchbase" \
       version="${PROD_VERSION}" \
       release="Latest" \
       summary="Couchbase Autonomous Operator ${PROD_VERSION} Log Support" \
