@@ -25,7 +25,6 @@ import (
 	"strings"
 )
 
-//
 type MembufLimitConfig struct {
 	NumInputs        int
 	NumOutputs       int
@@ -51,7 +50,7 @@ func extractEnvVar(line string) string {
 	return ""
 }
 
-// findNextPrefix returns the index of the line where the the prefix first appears
+// findNextPrefix returns the index of the line where the prefix first appears
 // -1 if it isn't found.
 func findNextPrefix(configFile *[]string, prefix string, searchFrom int) int {
 	length := len(*configFile)
@@ -114,8 +113,7 @@ func (p *ConfigFileParser) extractSection(sectionStart int) []string {
 // BuildSection parses the config file into the parsers
 // Input and Output properties.
 func (p *ConfigFileParser) BuildSections() *ConfigFileParser {
-	length := len(*p.ConfigFile)
-	for i := 0; i < length; i++ {
+	for i := range *p.ConfigFile {
 		line := strings.ToUpper(strings.TrimSpace((*p.ConfigFile)[i]))
 		switch line {
 		case "[INPUT]":

@@ -25,7 +25,7 @@ do
         exitCode=1
     fi
     if ! head "${SOURCE}" | grep -q 'Apache License, Version 2.0'; then
-        echo ".${SOURCE##"$SCRIPT_DIR/.."}: Missing licence"
+        echo ".${SOURCE##"$SCRIPT_DIR/.."}: Missing license"
         exitCode=1
     fi
 done < <(find "${SCRIPT_DIR}/.." -type d -path "*/go" -prune -o -type f \( -name '*.go' -o -name '*.sh' \) -print0)

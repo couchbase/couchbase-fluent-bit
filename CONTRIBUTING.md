@@ -39,7 +39,7 @@ Generally everything is covered by a simple make command which builds and runs a
 4. Run the `logging` feature tests.
 5. Clean up/remove the image you made.
 
-Quite often we will update to a new Fluent Bit version, the easiest way to do this is just to find-and-replace the string `FLUENT_BIT_VER=3.0.7` (or whatever the current version is) with the new value. This should affect the Makefile and Dockerfiles.
+Quite often we will update to a new Fluent Bit version, the easiest way to do this is just to find-and-replace the string `FLUENT_BIT_VER=4.0.1` (or whatever the current version is) with the new value. This should affect the Makefile and Dockerfiles.
 
 We have two container images - the vanilla container just layers on top of the OSS distroless images for Fluent Bit but the Red Hat container has to build it from source with some tweaks. We could use the RPMs for RHEL 7 but that’s not a great idea (there is an example doing this here: https://github.com/couchbase/couchbase-fluent-bit/tree/main/tools/ubi7) for two reasons:
 UBI 8 - this requires a huge amount of dependencies to use an OS style RHEL 7 RPM
@@ -67,7 +67,7 @@ This process is intended to be used by Couchbase employees only:
 
 Generally speaking QE will automatically pick up the latest builds and test them against the latest CAO build. Here we want to explicitly verify it against the latest release plus any previous compatible releases you want to say are supported.
 
-The other aspect to consider for a formal release is license checking via Black Duck but this is the standard Couchbase process. It will be scanned and results are in the usual place so just need reviewing. Ensure you exclude any tooling stuff (e.g. linting, Terrier, etc.).
+The other aspect to consider for a formal release is license checking via Black Duck but this is the standard Couchbase process. It will be scanned and results are in the usual place so just need reviewing. Ensure you exclude any tooling stuff (e.g. linting, etc.).
 
 ## Licensing
 

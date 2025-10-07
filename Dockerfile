@@ -1,19 +1,20 @@
-ARG FLUENT_BIT_VER=3.0.7
-FROM fluent/fluent-bit:$FLUENT_BIT_VER as base 
+ARG FLUENT_BIT_VER=4.0.1
+FROM fluent/fluent-bit:$FLUENT_BIT_VER AS base 
 
-FROM debian:bookworm as production
+FROM debian:bookworm-slim AS production
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \
     libyaml-0-2 \
     libsasl2-2 \
-    libpq5 && \
+    libpq5 \
+    libcurl4 && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=base /fluent-bit /fluent-bit
 
 ARG TARGETARCH
-ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
+ENV COUCHBASE_LOGS_BINARY=/fluent-bit/bin/fluent-bit
 
 # We need to layer on a binary to pre-process the rebalance reports and watch for config changes
 COPY bin/linux/couchbase-watcher-${TARGETARCH} /fluent-bit/bin/couchbase-watcher
@@ -21,19 +22,19 @@ COPY bin/linux/couchbase-watcher-${TARGETARCH} /fluent-bit/bin/couchbase-watcher
 COPY config/conf/ /fluent-bit/etc/
 
 # Set up output for rebalance pre-processing - can be overridden, e.g. for testing
-ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /tmp/rebalance-logs
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR=/tmp/rebalance-logs
 # Default location for logs but also set by the operator
-ENV COUCHBASE_LOGS /opt/couchbase/var/lib/couchbase/logs
-ENV COUCHBASE_AUDIT_LOGS /opt/couchbase/var/lib/couchbase/logs
+ENV COUCHBASE_LOGS=/opt/couchbase/var/lib/couchbase/logs
+ENV COUCHBASE_AUDIT_LOGS=/opt/couchbase/var/lib/couchbase/logs
 
 # To support mounting a configmap or secret but mixing with existing files we use a separate volume
 # This way we can keep using the parsers defined without having to re-define them.
 # If we try to mount via sub-path then it won't update: https://github.com/kubernetes/kubernetes/issues/50345
 VOLUME /fluent-bit/config
-ENV COUCHBASE_LOGS_DYNAMIC_CONFIG /fluent-bit/config
+ENV COUCHBASE_LOGS_DYNAMIC_CONFIG=/fluent-bit/config
 # Put a copy of the config in the area we want to monitor
 COPY config/conf/fluent-bit.conf /fluent-bit/config/fluent-bit.conf
-ENV COUCHBASE_LOGS_CONFIG_FILE /fluent-bit/config/fluent-bit.conf
+ENV COUCHBASE_LOGS_CONFIG_FILE=/fluent-bit/config/fluent-bit.conf
 
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
 COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
@@ -41,10 +42,10 @@ COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=3.0.7
-FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug as test
+ARG FLUENT_BIT_VER=4.0.1
+FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug AS test
 ARG TARGETARCH
-ENV COUCHBASE_LOGS_BINARY /fluent-bit/bin/fluent-bit
+ENV COUCHBASE_LOGS_BINARY=/fluent-bit/bin/fluent-bit
 
 COPY --from=production /fluent-bit/ /fluent-bit/
 # Add support for SHA1 hashing via a pure LUA implementation to use in redaction tutorial
@@ -58,10 +59,10 @@ COPY test/ /fluent-bit/test/
 COPY bin/linux/log-differ-${TARGETARCH} /bin/log-differ
 
 # Redirect to local logs
-ENV COUCHBASE_LOGS /fluent-bit/test/logs
-ENV COUCHBASE_AUDIT_LOGS /fluent-bit/test/logs
+ENV COUCHBASE_LOGS=/fluent-bit/test/logs
+ENV COUCHBASE_AUDIT_LOGS=/fluent-bit/test/logs
 
-ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /fluent-bit/test/logs/rebalance-logs
+ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR=/fluent-bit/test/logs/rebalance-logs
 
 # Disable mem buf limits for testing
 ENV MBL_AUDIT=false MBL_ERLANG=false MBL_EVENTING=false MBL_HTTP=false MBL_INDEX=false MBL_PROJECTOR=false MBL_JAVA=false MBL_MEMCACHED=false MBL_PROMETHEUS=false MBL_REBALANCE=false MBL_XDCR=false MBL_QUERY=false MBL_FTS=false
@@ -90,7 +91,7 @@ ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=3.0.7
+ARG FLUENT_BIT_VER=4.0.1
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -117,7 +118,7 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=3.0.7
+ARG FLUENT_BIT_VER=4.0.1
 ARG PROD_VERSION
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 

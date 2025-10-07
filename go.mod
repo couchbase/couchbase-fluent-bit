@@ -1,6 +1,6 @@
 module github.com/couchbase/fluent-bit
 
-go 1.20
+go 1.24.7
 
 require (
 	github.com/fsnotify/fsnotify v1.5.1
@@ -11,12 +11,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-require (
-	github.com/heroku/terrier v0.0.0-20200623122804-c3da2d1e1468
-	github.com/josephburnett/jd v1.7.1
-)
-
-replace github.com/heroku/terrier => github.com/usamahjassat/terrier v0.0.0-20240717165111-2419343288b7
+require github.com/josephburnett/jd v1.7.1
 
 require (
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect

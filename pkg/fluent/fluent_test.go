@@ -17,7 +17,6 @@
 package fluent_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -36,7 +35,7 @@ var (
 func createConfigTestDir(t *testing.T, baseDir, testName string) string {
 	t.Helper()
 
-	dir, err := ioutil.TempDir(baseDir, testName)
+	dir, err := os.MkdirTemp(baseDir, testName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -164,7 +163,7 @@ func TestFluentBitRestartOnConfigChange(t *testing.T) {
 			_ = dst.Close()
 
 			// Allow us time to restart
-			time.Sleep(time.Second)
+			time.Sleep(3 * time.Second)
 
 			// Check we have incremented the start count
 			if config.GetStartCount() != i+1 {

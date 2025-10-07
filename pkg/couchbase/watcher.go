@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -50,7 +49,7 @@ func RemoveOldestFiles(rebalanceOutputDir string) error {
 	// Be nicer to use lumberjack or similar with a logger just to rotate and remove older files.
 	log.Debugw("Checking for older files to remove", "dir", rebalanceOutputDir)
 
-	files, err := ioutil.ReadDir(rebalanceOutputDir)
+	files, err := os.ReadDir(rebalanceOutputDir)
 	if err != nil {
 		return fmt.Errorf("unable to read directory %q for old files: %w", rebalanceOutputDir, err)
 	}
@@ -74,15 +73,27 @@ func RemoveOldestFiles(rebalanceOutputDir string) error {
 	// Now clip off the extras at the end
 	files = files[:i]
 
-	if len(files) > MaxCBFiles {
-		log.Infow("Too many files so removing older files", "dir", rebalanceOutputDir, "count", len(files), "max", MaxCBFiles)
+	// Convert []os.DirEntry -> []os.FileInfo
+	entries := make([]os.FileInfo, 0, len(files))
 
-		sort.Slice(files, func(i, j int) bool {
-			return files[i].ModTime().Before(files[j].ModTime())
+	for _, entry := range files {
+		info, err := entry.Info()
+		if err != nil {
+			panic(err)
+		}
+
+		entries = append(entries, info)
+	}
+
+	if len(entries) > MaxCBFiles {
+		log.Infow("Too many files so removing older files", "dir", rebalanceOutputDir, "count", len(entries), "max", MaxCBFiles)
+
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].ModTime().Before(entries[j].ModTime())
 		})
 
 		// Now we have them from oldest to most recent, remove the oldest up to the max
-		filesToDelete := files[:len(files)-MaxCBFiles]
+		filesToDelete := entries[:len(entries)-MaxCBFiles]
 		log.Debugf("Removing %d files", len(filesToDelete))
 
 		for _, f := range filesToDelete {
@@ -106,13 +117,13 @@ func ProcessFile(filename, rebalanceOutputDir string) error {
 	filename = filepath.Clean(filename)
 
 	// Read the contents in one go, we could do it section by section for better memory usage later
-	contents, err := ioutil.ReadFile(filename)
+	contents, err := os.ReadFile(filename)
 	if err != nil {
 		return fmt.Errorf("unable to open file %q: %w", filename, err)
 	}
 
 	// Copy file to temporary
-	tmpfile, err := ioutil.TempFile(rebalanceOutputDir, "rebalance-processed-*.json")
+	tmpfile, err := os.CreateTemp(rebalanceOutputDir, "rebalance-processed-*.json")
 	if err != nil {
 		return fmt.Errorf("unable to create temporary output file in %q: %w", rebalanceOutputDir, err)
 	}
@@ -160,7 +171,7 @@ func ProcessExisting(config WatcherConfig) error {
 	// Deal with any existing files
 	couchbaseWatchDir := filepath.Clean(config.couchbaseWatchDir)
 
-	files, err := ioutil.ReadDir(couchbaseWatchDir)
+	files, err := os.ReadDir(couchbaseWatchDir)
 	if err != nil {
 		return fmt.Errorf("unable to read input directory %q: %w", couchbaseWatchDir, err)
 	}
@@ -267,7 +278,9 @@ func AddCouchbaseWatcher(g *run.Group, config WatcherConfig) error {
 					if !common.IsValidEvent(event) {
 						continue
 					}
+
 					log.Debugw("Couchbase watcher event triggered", "event", event)
+
 					if foundRebalance {
 						rebalanceFileHandler(event.Name, config)
 					} else {
@@ -280,8 +293,9 @@ func AddCouchbaseWatcher(g *run.Group, config WatcherConfig) error {
 				}
 			}
 		},
-		func(err error) {
+		func(_ error) {
 			_ = watcher.Close()
+
 			close(done)
 		},
 	)

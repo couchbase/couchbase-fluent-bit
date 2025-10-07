@@ -18,13 +18,11 @@ linters:
   - test
   - unused
   # Deal with deprecation warnings
-  enable:
-  - exportloopref
   disable:
-  - golint # replaced with revive in 1.40
-  - interfacer
-  - maligned
-  - scopelint
+  - gomoddirectives
+  - usetesting
+  - varnamelen
+  - depguard
   - gofumpt # as per operator
   - lll # long lines as per operator
   - gochecknoglobals # global variables as per operator (and for logging)

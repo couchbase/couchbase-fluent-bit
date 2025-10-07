@@ -105,6 +105,7 @@ const rebalanceDirPermissions fs.FileMode = 0700
 
 func (cw *WatcherConfig) CreateRebalanceDir() error {
 	err := os.Mkdir(cw.rebalanceOutputDir, rebalanceDirPermissions)
+
 	if err != nil && !errors.Is(err, os.ErrExist) {
 		return fmt.Errorf("unable to create rebalance output directory %q: %w", cw.rebalanceOutputDir, err)
 	}

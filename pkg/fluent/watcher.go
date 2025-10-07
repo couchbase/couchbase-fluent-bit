@@ -18,7 +18,6 @@ package fluent
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"os/exec"
@@ -97,7 +96,7 @@ func Start(fb *Config) {
 
 	common.CheckAndEnableMemoryBufLimits()
 
-	configContents, configErr := ioutil.ReadFile(fb.cfgPath)
+	configContents, configErr := os.ReadFile(fb.cfgPath)
 	if configErr != nil {
 		log.Errorw("Unable to retrieve Fluent bit config contents", "error", configErr, "config", fb.cfgPath)
 	} else {
@@ -141,7 +140,7 @@ func Wait(fb *Config) {
 	// If killed by us this is normal
 	if !fb.cleanStop {
 		// If not killed by us then grab the config as well to check if that is the cause
-		config, err := ioutil.ReadFile(fb.cfgPath)
+		config, err := os.ReadFile(fb.cfgPath)
 		if err != nil {
 			log.Errorw("Fluent bit exited", "error", fb.cmd.Wait(), "binary", fb.binPath, "config", fb.cfgPath, "configError", err)
 		} else {
@@ -240,7 +239,7 @@ func addFluentBitWatcher(g *run.Group, config *Config) {
 				backoff(config)
 			}
 		},
-		func(err error) {
+		func(_ error) {
 			close(cancel)
 			Stop(config)
 			resetTimer(config)
@@ -286,8 +285,9 @@ func AddDynamicConfigWatcher(g *run.Group, fb *Config) error {
 				}
 			}
 		},
-		func(err error) {
+		func(_ error) {
 			_ = watcher.Close()
+
 			close(cancel)
 		},
 	)

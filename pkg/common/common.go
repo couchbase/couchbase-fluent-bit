@@ -131,6 +131,7 @@ func LoadEnvironment() {
 			if err != nil {
 				return err
 			}
+
 			if !f.IsDir() {
 				_ = godotenv.Overload(path)
 			}

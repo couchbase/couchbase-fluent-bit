@@ -10,11 +10,11 @@ ARTIFACTS = build/artifacts/
 # and also avoid scruitiny from scanners.
 GOPATH := $(shell go env GOPATH)
 GOBIN := $(if $(GOPATH),$(GOPATH)/bin,$(HOME)/go/bin)
-GOLINT_VERSION := v1.42.1
+GOLINT_VERSION := v1.64.8
 TRIVY_TAG=0.23.0
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=3.0.7
+FLUENT_BIT_VER=4.0.1
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
@@ -87,7 +87,7 @@ lint:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLINT_VERSION)
 	$(GOBIN)/golangci-lint run ./cmd/... ./pkg/...
 	tools/shellcheck.sh
-	tools/licence-lint.sh
+	tools/license-lint.sh
 	tools/hadolint.sh
 
 test-unit:
@@ -122,10 +122,11 @@ container-scan: container container-rhel
 
 # Check for vulnerabilites and some of the requirements of Red Hat certification
 # Taken from Red Hat certification requirements: https://connect.redhat.com/zones/containers/container-certification-policy-guide
-# Licenses provided
+# License files exist
+# Container runs as non root
 # Layer count <40
 # Labels present
-# Numeric user id for couchbase
+# License files are correct
 # Goal here is to fail early with some simple checks
 container-rhel-checks: container-scan
 	docker run --rm ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG} ls -l /licenses/
@@ -135,8 +136,7 @@ container-rhel-checks: container-scan
 		echo "Checking for label $$label" ; \
 		docker inspect --format '{{ index .Config.Labels }}' ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}| grep -q "$$label:" ; \
 	done
-	docker save -o fluent-bit-rhel.tar ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
-	go run github.com/heroku/terrier -cfg terrier.cfg.yml && rm -f fluent-bit-rhel.tar
+	bash tools/license-validation.sh ${DOCKER_USER}/fluent-bit-rhel:${DOCKER_TAG}
 
 # Run the Fluent Bit unit tests (and all the others but these are disabled by default) in the RHEL container
 container-rhel-tests: container-rhel

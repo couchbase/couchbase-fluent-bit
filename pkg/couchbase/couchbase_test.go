@@ -17,7 +17,6 @@
 package couchbase_test
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -36,6 +35,7 @@ func createTestFilesByTimestamp(t *testing.T, dir string) {
 		if err != nil {
 			t.Fatal(err, i)
 		}
+
 		defer dst.Close()
 		time.Sleep(time.Second)
 	}
@@ -44,7 +44,7 @@ func createTestFilesByTimestamp(t *testing.T, dir string) {
 func countFilesInDirectory(t *testing.T, dir string) int {
 	t.Helper()
 
-	files, err := ioutil.ReadDir(dir)
+	files, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal(err, dir)
 	}
@@ -55,7 +55,7 @@ func countFilesInDirectory(t *testing.T, dir string) int {
 func createRebalanceTestDir(t *testing.T, baseDir, testName string) string {
 	t.Helper()
 
-	dir, err := ioutil.TempDir(baseDir, testName)
+	dir, err := os.MkdirTemp(baseDir, testName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,6 +93,7 @@ func TestRemoveOldestFilesWithNestedDirs(t *testing.T) {
 		nestedDir := createRebalanceTestDir(t, dir, "oldest_files_test_with_dir")
 		defer os.RemoveAll(nestedDir)
 	}
+
 	createTestFilesByTimestamp(t, dir)
 
 	if err := couchbase.RemoveOldestFiles(dir); err != nil {
@@ -113,7 +114,7 @@ func TestProcessFile(t *testing.T) {
 	// Iterate over each test file to check
 	inputDir := filepath.Clean("../../test/logs/rebalance")
 
-	files, err := ioutil.ReadDir(inputDir)
+	files, err := os.ReadDir(inputDir)
 	if err != nil {
 		t.Fatal(err, inputDir)
 	}
@@ -126,7 +127,7 @@ func TestProcessFile(t *testing.T) {
 		}
 	}
 
-	outputFiles, err := ioutil.ReadDir(dir)
+	outputFiles, err := os.ReadDir(dir)
 	if err != nil {
 		t.Fatal(err, dir)
 	}

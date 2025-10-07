@@ -208,7 +208,7 @@ done
 if bash /fluent-bit/test/run-file-transfer-tests.sh; then
     echo "PASSED: file transfer example script"
 else
-    echo "FAILED: file transfer example"
+    echo "FAILED: file transfer example (exit status: $?)"
 fi
 
 # Now we run the golden diffs, i.e. compare actual to expected output

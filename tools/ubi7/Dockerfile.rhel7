@@ -2,6 +2,7 @@ FROM registry.access.redhat.com/ubi7/ubi:7.9 as production
 LABEL description="Couchbase Fluent Bit image with support for config reload, pre-processing and redaction" vendor="Couchbase" maintainer="docker@couchbase.com"
 
 COPY td-agent-repo.rhel /etc/yum.repos.d/td-agent.repo
+# hadolint ignore=DL3033
 RUN sed -i 's/enabled=1/enabled=0/' /etc/yum/pluginconf.d/subscription-manager.conf \
     && yum update -y \
     && yum install -y td-agent-bit \
