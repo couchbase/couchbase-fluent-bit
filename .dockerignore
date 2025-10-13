@@ -7,7 +7,7 @@
 !*-repo.rhel
 !bin/
 # !conf/
-!config/
+!config/conf/**
 !redaction/
 !lua/
 !non-root.passwd
