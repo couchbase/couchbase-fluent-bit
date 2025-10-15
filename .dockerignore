@@ -6,7 +6,7 @@
 # Now include all the files we need for functionality
 !*-repo.rhel
 !bin/
-# !conf/
+!config/
 !config/conf/**
 !redaction/
 !lua/
