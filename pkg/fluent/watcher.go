@@ -298,3 +298,62 @@ func AddDynamicConfigWatcher(g *run.Group, fb *Config) error {
 
 	return nil
 }
+
+// AddTLSCertsWatcher adds a watcher for TLS certificate changes.
+// When TLS certificates are updated (e.g., rotated), this watcher will
+// detect the change and restart FluentBit to pick up the new certificates.
+// This supports mTLS certificate rotation for secure log shipping.
+func AddTLSCertsWatcher(g *run.Group, fb *Config, tlsCertsDir string) error {
+	if tlsCertsDir == "" {
+		log.Info("TLS certificates directory not configured, skipping TLS watcher")
+
+		return nil
+	}
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return fmt.Errorf("unable to create TLS certs watcher: %w", err)
+	}
+
+	// Start watcher on the TLS certs directory.
+	err = watcher.Add(tlsCertsDir)
+	if err != nil {
+		return fmt.Errorf("unable to add %q to TLS certs watcher: %w", tlsCertsDir, err)
+	}
+
+	cancel := make(chan struct{})
+
+	g.Add(
+		func() error {
+			for {
+				select {
+				case <-cancel:
+					return nil
+				case event := <-watcher.Events:
+					if !common.IsValidEvent(event) {
+						continue
+					}
+
+					// After TLS certificates change, stop FluentBit so it can be
+					// restarted with the new certificates.
+					log.Infow("TLS certificate changed, restarting Fluent Bit", "event", event.Name)
+					Stop(fb)
+					resetTimer(fb)
+				case err := <-watcher.Errors:
+					log.Errorw("TLS certs watcher error", "error", err)
+
+					return nil
+				}
+			}
+		},
+		func(_ error) {
+			_ = watcher.Close()
+
+			close(cancel)
+		},
+	)
+
+	log.Infow("Added TLS certs watcher", "directory", tlsCertsDir)
+
+	return nil
+}

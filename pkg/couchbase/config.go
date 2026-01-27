@@ -33,7 +33,8 @@ type WatcherConfig struct {
 	fluentBitConfigFilePath,
 	couchbaseLogDir,
 	rebalanceOutputDir,
-	couchbaseWatchDir string
+	couchbaseWatchDir,
+	tlsCertsDir string
 }
 
 func (cw *WatcherConfig) MarshalLogObject(enc zapcore.ObjectEncoder) error {
@@ -43,6 +44,7 @@ func (cw *WatcherConfig) MarshalLogObject(enc zapcore.ObjectEncoder) error {
 	enc.AddString("couchbaseLogDir", cw.couchbaseLogDir)
 	enc.AddString("rebalanceOutputDir", cw.rebalanceOutputDir)
 	enc.AddString("couchbaseWatchDir", cw.couchbaseWatchDir)
+	enc.AddString("tlsCertsDir", cw.tlsCertsDir)
 
 	return nil
 }
@@ -58,6 +60,8 @@ func NewWatcherConfigFromDefaults() *WatcherConfig {
 	couchbaseWatchDir := common.GetRebalanceReportDir()
 	// We need write access to this directory
 	rebalanceOutputDir := common.GetRebalanceOutputDir()
+	// TLS certificates directory for mTLS support (optional)
+	tlsCertsDir := common.GetTLSCertsDir()
 
 	config := WatcherConfig{
 		fluentBitConfigDir:      fluentBitConfigDir,
@@ -66,6 +70,7 @@ func NewWatcherConfigFromDefaults() *WatcherConfig {
 		couchbaseLogDir:         couchbaseLogDir,
 		rebalanceOutputDir:      rebalanceOutputDir,
 		couchbaseWatchDir:       couchbaseWatchDir,
+		tlsCertsDir:             tlsCertsDir,
 	}
 
 	log.Infow("Using configuration", "config", config)
@@ -89,6 +94,10 @@ func (cw *WatcherConfig) SetCouchbaseWatchDir(value string) {
 	cw.couchbaseWatchDir = filepath.Clean(value)
 }
 
+func (cw *WatcherConfig) SetTLSCertsDir(value string) {
+	cw.tlsCertsDir = filepath.Clean(value)
+}
+
 func (cw *WatcherConfig) GetFluentBitBinaryPath() string {
 	return filepath.Clean(cw.fluentBitBinaryPath)
 }
@@ -99,6 +108,18 @@ func (cw *WatcherConfig) GetFluentBitConfigFilePath() string {
 
 func (cw *WatcherConfig) GetWatchedFluentBitConfigDir() string {
 	return filepath.Clean(cw.fluentBitConfigDir)
+}
+
+// GetTLSCertsDir returns the TLS certificates directory.
+// Returns empty string if TLS is not configured.
+// Note: Unlike other getters, this checks for empty string because
+// filepath.Clean("") returns "." which would incorrectly watch current directory.
+func (cw *WatcherConfig) GetTLSCertsDir() string {
+	if cw.tlsCertsDir == "" {
+		return ""
+	}
+
+	return filepath.Clean(cw.tlsCertsDir)
 }
 
 const rebalanceDirPermissions fs.FileMode = 0700

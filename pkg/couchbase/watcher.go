@@ -329,5 +329,13 @@ func CreateWatchers(cw WatcherConfig) (*run.Group, error) {
 		return nil, fmt.Errorf("%w: unable to add fluent config watcher", err)
 	}
 
+	// Add TLS certificate watcher for mTLS certificate rotation support.
+	// This watches the TLS certs directory (if configured) and restarts
+	// FluentBit when certificates are updated.
+	err = fluent.AddTLSCertsWatcher(&g, fb, cw.GetTLSCertsDir())
+	if err != nil {
+		return nil, fmt.Errorf("%w: unable to add TLS certs watcher", err)
+	}
+
 	return &g, nil
 }

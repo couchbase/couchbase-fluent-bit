@@ -32,10 +32,10 @@ var (
 	log = logging.GetLogger("fluent-bit-tester")
 )
 
-func createConfigTestDir(t *testing.T, baseDir, testName string) string {
+func createConfigTestDir(t *testing.T, testName string) string {
 	t.Helper()
 
-	dir, err := os.MkdirTemp(baseDir, testName)
+	dir, err := os.MkdirTemp("", testName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func TestCommandRun(t *testing.T) {
 	t.Parallel()
 
 	// Use a temporary directory to watch
-	dir := createConfigTestDir(t, "", "command_run_test")
+	dir := createConfigTestDir(t, "command_run_test")
 	defer os.RemoveAll(dir)
 
 	testFile := filepath.Join(dir, "test.exists")
@@ -123,7 +123,7 @@ func TestCommandStop(t *testing.T) {
 func TestFluentBitRestartOnConfigChange(t *testing.T) {
 	t.Parallel()
 	// Use a temporary directory to watch
-	dir := createConfigTestDir(t, "", "fluent_bit_restart_test")
+	dir := createConfigTestDir(t, "fluent_bit_restart_test")
 	defer os.RemoveAll(dir)
 
 	testFile := filepath.Join(dir, "test.restarts")
@@ -180,5 +180,117 @@ func TestFluentBitRestartOnConfigChange(t *testing.T) {
 
 	if err := g.Run(); err != nil {
 		t.Errorf("Error during test: %v", err)
+	}
+}
+
+// TestTLSCertificateRotationRestartsFluentBit confirms that when TLS certificates
+// are updated (rotated), the FluentBit process is restarted to pick up new certs.
+// This tests the mTLS certificate rotation feature.
+func TestTLSCertificateRotationRestartsFluentBit(t *testing.T) {
+	t.Parallel()
+
+	// Create separate directories for config and TLS certs
+	configDir := createConfigTestDir(t, "tls_rotation_config_test")
+	defer os.RemoveAll(configDir)
+
+	tlsCertsDir := createConfigTestDir(t, "tls_rotation_certs_test")
+	defer os.RemoveAll(tlsCertsDir)
+
+	// Use a custom binary (sleep) for testing
+	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 20000", configDir)
+
+	var g run.Group
+
+	// Add the dynamic config watcher first (this also adds the FluentBit watcher)
+	if err := fluent.AddDynamicConfigWatcher(&g, config); err != nil {
+		t.Fatal(err)
+	}
+
+	// Add the TLS certs watcher
+	if err := fluent.AddTLSCertsWatcher(&g, config, tlsCertsDir); err != nil {
+		t.Fatal(err)
+	}
+
+	if config.GetStartCount() != 0 {
+		t.Errorf("Invalid restart count at the start: %d", config.GetStartCount())
+	}
+
+	// Test that creating/updating files in the TLS certs directory triggers a restart
+	g.Add(func() error {
+		return runTLSRotationTestCycle(t, config, tlsCertsDir)
+	}, func(err error) {
+		if err != nil {
+			t.Errorf("Error during TLS rotation test: %v", err)
+		}
+	})
+
+	if err := g.Run(); err != nil {
+		t.Errorf("Error during test: %v", err)
+	}
+}
+
+// runTLSRotationTestCycle tests certificate rotation by creating/updating cert files.
+func runTLSRotationTestCycle(t *testing.T, config *fluent.Config, tlsCertsDir string) error {
+	t.Helper()
+
+	// Allow for command to start before we change anything
+	time.Sleep(time.Second)
+
+	initialStartCount := config.GetStartCount()
+	if initialStartCount != 1 {
+		t.Errorf("FluentBit should have started once: got %d", initialStartCount)
+	}
+
+	// Simulate certificate rotation by creating a new cert file
+	certFile := filepath.Join(tlsCertsDir, "tls.crt")
+	if err := os.WriteFile(certFile, []byte("fake-certificate-content"), 0600); err != nil {
+		t.Fatalf("Failed to create cert file: %v", err)
+	}
+
+	// Allow time for the watcher to detect the change and restart
+	time.Sleep(3 * time.Second)
+
+	// Verify FluentBit was restarted
+	afterCertRotation := config.GetStartCount()
+	if afterCertRotation != initialStartCount+1 {
+		t.Errorf("FluentBit should have restarted after cert rotation: got %d, expected %d",
+			afterCertRotation, initialStartCount+1)
+	}
+
+	// Simulate another certificate update (e.g., key rotation)
+	keyFile := filepath.Join(tlsCertsDir, "tls.key")
+	if err := os.WriteFile(keyFile, []byte("fake-key-content"), 0600); err != nil {
+		t.Fatalf("Failed to create key file: %v", err)
+	}
+
+	// Allow time for restart
+	time.Sleep(3 * time.Second)
+
+	// Verify another restart occurred
+	afterKeyRotation := config.GetStartCount()
+	if afterKeyRotation != afterCertRotation+1 {
+		t.Errorf("FluentBit should have restarted after key rotation: got %d, expected %d",
+			afterKeyRotation, afterCertRotation+1)
+	}
+
+	return nil
+}
+
+// TestTLSWatcherSkippedWhenNotConfigured confirms that when no TLS certs
+// directory is configured, the TLS watcher is not added (returns no error).
+func TestTLSWatcherSkippedWhenNotConfigured(t *testing.T) {
+	t.Parallel()
+
+	configDir := createConfigTestDir(t, "tls_not_configured_test")
+	defer os.RemoveAll(configDir)
+
+	config := fluent.NewFluentBitConfig("/bin/bash", "sleep 1", configDir)
+
+	var g run.Group
+
+	// Empty string should skip the TLS watcher without error
+	err := fluent.AddTLSCertsWatcher(&g, config, "")
+	if err != nil {
+		t.Errorf("AddTLSCertsWatcher should not return error for empty dir: %v", err)
 	}
 }

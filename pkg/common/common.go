@@ -51,6 +51,10 @@ const (
 	// KubernetesConfigEnvVar should only be used for testing.
 	KubernetesConfigEnvVar  = "COUCHBASE_K8S_CONFIG_DIR"
 	kubernetesConfigDefault = "/etc/podinfo"
+	// TLSCertsEnvVar is the environment variable for the TLS certificates directory.
+	// When set, the directory is watched for changes to trigger FluentBit restart
+	// for certificate rotation support.
+	TLSCertsEnvVar = "COUCHBASE_LOGS_TLS_CERTS"
 	// Special handling for these annotations.
 	FluentBitAnnotationPrefix = "fluentbit.couchbase.com/"
 	// Container limits.
@@ -114,6 +118,12 @@ func GetRebalanceOutputDir() string {
 
 func GetKubernetesConfigDir() string {
 	return GetDirectory(kubernetesConfigDefault, KubernetesConfigEnvVar)
+}
+
+// GetTLSCertsDir returns the TLS certificates directory if configured.
+// Returns empty string if TLS is not configured.
+func GetTLSCertsDir() string {
+	return os.Getenv(TLSCertsEnvVar)
 }
 
 func GetAuditEnabled() bool {
