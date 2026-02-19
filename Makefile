@@ -11,17 +11,17 @@ ARTIFACTS = build/artifacts/
 GOPATH := $(shell go env GOPATH)
 GOBIN := $(if $(GOPATH),$(GOPATH)/bin,$(HOME)/go/bin)
 GOLINT_VERSION := v1.64.8
-TRIVY_TAG=0.23.0
+TRIVY_TAG=latest
 
 # Easily test builds for new versions with no code changes
-FLUENT_BIT_VER=4.0.1
+FLUENT_BIT_VER=4.2.2
 
 # This allows the container tags to be explicitly set.
 DOCKER_USER = couchbase
 DOCKER_TAG = v1
 
 # For testing
-SERVER_IMAGE = couchbase/server:7.0.2
+SERVER_IMAGE = couchbase/server:8.0.0
 
 # What exact revision is this?
 GIT_REVISION := $(shell git rev-parse HEAD)

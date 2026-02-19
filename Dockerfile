@@ -1,7 +1,7 @@
-ARG FLUENT_BIT_VER=4.0.1
+ARG FLUENT_BIT_VER=4.2.2
 FROM fluent/fluent-bit:$FLUENT_BIT_VER AS base 
 
-FROM debian:bookworm-slim AS production
+FROM debian:trixie-slim AS production
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \
@@ -42,7 +42,7 @@ COPY lua/sha1/ /usr/local/share/lua/5.1/sha1/
 COPY lua/*.lua /fluent-bit/etc/
 
 # Testing image to verify parsers and the watcher functionality
-ARG FLUENT_BIT_VER=4.0.1
+ARG FLUENT_BIT_VER=4.2.2
 FROM fluent/fluent-bit:${FLUENT_BIT_VER}-debug AS test
 ARG TARGETARCH
 ENV COUCHBASE_LOGS_BINARY=/fluent-bit/bin/fluent-bit
@@ -91,7 +91,7 @@ ENV HTTP_PORT=$HTTP_PORT
 EXPOSE $HTTP_PORT
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=4.0.1
+ARG FLUENT_BIT_VER=4.2.2
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER
 ARG PROD_VERSION
 ENV COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
@@ -118,7 +118,7 @@ COPY non-root.passwd /etc/passwd
 USER 8453
 
 # Keep track of the versions we are using - not persisted between stages
-ARG FLUENT_BIT_VER=4.0.1
+ARG FLUENT_BIT_VER=4.2.2
 ARG PROD_VERSION
 ENV FLUENTBIT_VERSION=$FLUENT_BIT_VER COUCHBASE_FLUENTBIT_VERSION=$PROD_VERSION
 
