@@ -40,7 +40,7 @@ TEST_LDFLAGS = "-X github.com/couchbase/fluent-bit/pkg/version.version=1 -X gith
 
 .PHONY: all build lint test-unit container container-rhel container-public container-scan container-rhel-checks container-rhel-tests dist test perf-test integration-test generate-logs test-dist container-clean clean
 
-all: clean build lint test-unit container container-rhel container-scan container-rhel-checks test dist test-dist
+all: build lint test-unit container container-rhel container-scan container-rhel-checks test dist test-dist
 
 build: $(SOURCE) go.mod conf check-and-reinit-submodules
 	for platform in linux darwin ; do \
@@ -110,7 +110,7 @@ container-rhel: build
 
 # RHEL base image fails Dive checks so just include for info and do not fail the build
 container-scan: container container-rhel
-	docker inspect ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} --format '{{.Config.User}}' | grep -q "8453"
+	docker inspect ${DOCKER_USER}/fluent-bit:${DOCKER_TAG} --format '{{.Config.User}}' | grep -q "65532"
 	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
 		image --severity "HIGH,CRITICAL" --ignore-unfixed --exit-code 1 --no-progress ${DOCKER_USER}/fluent-bit:${DOCKER_TAG}
 	-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:${TRIVY_TAG} \
