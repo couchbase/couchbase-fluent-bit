@@ -24,10 +24,9 @@ ENV COUCHBASE_LOGS_BINARY=/usr/local/bin/fluent-bit
 RUN mkdir -p /fluent-bit/bin \
              /fluent-bit/etc/couchbase \
              /fluent-bit/config \
-             /tmp/rebalance-logs \
              /opt/couchbase/var/lib/couchbase/logs \
              /usr/local/share/lua/5.1/sha1 && \
-    chown -R 65532:65532 /fluent-bit /tmp /opt /usr/local/share/lua
+    chown -R 65532:65532 /fluent-bit /opt /usr/local/share/lua
 
 # Layer on Couchbase watcher binary
 COPY --chown=65532:65532 bin/linux/couchbase-watcher-${TARGETARCH} /fluent-bit/bin/couchbase-watcher
