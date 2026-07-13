@@ -44,10 +44,22 @@ ENV COUCHBASE_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_AUDIT_LOGS /fluent-bit/test/logs
 ENV COUCHBASE_LOGS_REBALANCE_TMP_DIR /fluent-bit/test/logs/rebalance-logs
 
+# Need to chmod for log & config output write access
+# Add user to run as
+RUN mkdir -p /fluent-bit/test/logs && \
+    chmod 777 /fluent-bit/test/ /fluent-bit/test/logs && \
+    chmod 777 -R /fluent-bit/etc/ && \
+    useradd -u 8453 -m -s /bin/false couchbase
+USER 8453
+
 EXPOSE 2020
 CMD ["sh", "/fluent-bit/test/run-tests.sh"]
 
 FROM production
+
+RUN useradd -u 8453 -m -s /bin/false couchbase
+USER 8453
+
 ENV COUCHBASE_LOGS_BINARY /opt/td-agent-bit/bin/td-agent-bit
 
 EXPOSE 2020
