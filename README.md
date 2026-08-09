@@ -4,7 +4,7 @@
 
 The Couchbase Fluent Bit image is an image based on the official [Fluent Bit](https://fluentbit.io/) [image](https://hub.docker.com/r/fluent/fluent-bit/) with some additional support for the following:
 1. Dynamic configuration reload - changes to the configuration are watched for and when detected trigger a restart of Fluent Bit to pick up the new configuration.
-2. Rebalace report pre-processing - the rebalance reports produced by Couchbase need some additional pre-processing before they can be parsed by Fluent Bit.
+2. Rebalance report pre-processing - the rebalance reports produced by Couchbase need some additional pre-processing before they can be parsed by Fluent Bit.
 3. SHA1 LUA hashing implementation and redaction support included (but not enabled by default).
 
 This image is intended to be used as a sidecar with a Couchbase Autonomous Operator deployment to automatically stream various couchbase logs.
